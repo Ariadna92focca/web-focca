@@ -45,16 +45,21 @@ export default function PrivadoPage() {
     useEffect(() => {
         supabase.auth.getSession().then(async ({ data: { session } }) => {
             setSession(session);
-            if (session) await fetchUserData(session.user.id);
-            else setLoading(false);
+            if (session) {
+                await fetchUserData(session.user.id);
+            } else {
+                setLoading(false);
+            }
         });
 
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
             setSession(session);
-            if (session) await fetchUserData(session.user.id);
-            else {
+            if (session) {
+                await fetchUserData(session.user.id);
+            } else {
                 setUserData(null);
                 setDocuments([]);
+                setLoading(false);
             }
         });
 
@@ -70,7 +75,11 @@ export default function PrivadoPage() {
                 .eq('id', userId)
                 .single();
 
-            if (error) throw error;
+            if (error) {
+                console.error("No user found in focde_usuarios, Logging out.");
+                await supabase.auth.signOut();
+                throw error;
+            }
             setUserData(data as FocdeUser);
 
             if (data.rol === 'admin') {

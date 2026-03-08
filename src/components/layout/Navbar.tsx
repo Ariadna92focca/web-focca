@@ -1,8 +1,13 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
+import { useState } from "react";
 import { Menu, X, Bird, FileText, Users, Images, Link as LinkIcon } from "lucide-react";
 
 export function Navbar() {
+    const [isOpen, setIsOpen] = useState(false);
+
     return (
         <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
             <div className="container mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
@@ -30,15 +35,31 @@ export function Navbar() {
                     </Link>
                 </nav>
 
-                <button className="md:hidden p-2 text-foreground/70 hover:text-foreground">
-                    <Menu className="w-6 h-6" />
+                <button
+                    onClick={() => setIsOpen(!isOpen)}
+                    className="md:hidden p-2 text-foreground/70 hover:text-foreground"
+                >
+                    {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
                 </button>
             </div>
+
+            {/* Mobile Nav Overlay */}
+            {isOpen && (
+                <div className="md:hidden absolute top-full left-0 w-full bg-background border-b border-border shadow-lg py-4 px-6 flex flex-col gap-4">
+                    <NavLinks mobile onClick={() => setIsOpen(false)} />
+                    <Link
+                        href="/privado"
+                        onClick={() => setIsOpen(false)}
+                        className="inline-flex h-12 w-full mt-2 items-center justify-center rounded-xl bg-primary px-6 text-base font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                    >
+                        Área Privada
+                    </Link>
+                </div>
+            )}
         </header>
     );
 }
-
-function NavLinks() {
+function NavLinks({ mobile, onClick }: { mobile?: boolean, onClick?: () => void }) {
     const links = [
         { name: "Inicio", href: "/" },
         { name: "Quiénes Somos", href: "/quienes-somos" },
@@ -54,10 +75,13 @@ function NavLinks() {
                 <Link
                     key={link.name}
                     href={link.href}
-                    className="text-sm font-medium text-foreground/70 transition-colors hover:text-primary relative group py-2"
+                    onClick={onClick}
+                    className={`font-medium text-foreground/70 transition-colors hover:text-primary relative group ${mobile ? 'text-lg py-3 border-b border-border/50' : 'text-sm py-2'}`}
                 >
                     {link.name}
-                    <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all group-hover:w-full opacity-0 group-hover:opacity-100 rounded-full" />
+                    {!mobile && (
+                        <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all group-hover:w-full opacity-0 group-hover:opacity-100 rounded-full" />
+                    )}
                 </Link>
             ))}
         </>

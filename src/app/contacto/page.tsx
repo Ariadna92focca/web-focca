@@ -29,7 +29,7 @@ export default function ContactoPage() {
                                 </div>
                                 <div>
                                     <h4 className="font-bold text-foreground">Dirección Postal</h4>
-                                    <p className="text-foreground/60 text-sm">Sede Central FOCCA-FOCDE, Av. Principal 123, Canarias.</p>
+                                    <p className="text-foreground/60 text-sm">Calle el hoyo 14-A. Vilaflor de Chasna 38614</p>
                                 </div>
                             </div>
 
@@ -39,7 +39,7 @@ export default function ContactoPage() {
                                 </div>
                                 <div>
                                     <h4 className="font-bold text-foreground">Correo Electrónico</h4>
-                                    <a href="mailto:info@focca-focde.com" className="text-primary hover:underline text-sm font-medium">info@focca-focde.com</a>
+                                    <a href="mailto:foycca@gmail.com" className="text-primary hover:underline text-sm font-medium">foycca@gmail.com</a>
                                 </div>
                             </div>
 
@@ -49,7 +49,7 @@ export default function ContactoPage() {
                                 </div>
                                 <div>
                                     <h4 className="font-bold text-foreground">Teléfono</h4>
-                                    <p className="text-foreground/60 text-sm">+34 000 000 000</p>
+                                    <p className="text-foreground/60 text-sm">+34 607302585</p>
                                 </div>
                             </div>
                         </div>

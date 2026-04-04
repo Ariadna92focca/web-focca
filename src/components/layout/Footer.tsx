@@ -5,8 +5,8 @@ export function Footer() {
     return (
         <footer className="w-full bg-card border-t border-border mt-auto">
             <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-                    <div className="md:col-span-1 space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
+                    <div className="md:col-span-1 lg:col-span-1 space-y-4">
                         <h3 className="font-heading font-bold text-lg text-foreground">FOCCA-FOCDE</h3>
                         <p className="text-sm text-foreground/60 leading-relaxed">
                             Federación Ornitológica Cultural y Deportiva, dedicada a la promoción, preservación y disfrute de la ornitología.
@@ -20,6 +20,7 @@ export function Footer() {
                             <li><Link href="/asociaciones" className="hover:text-primary transition-colors">Asociaciones</Link></li>
                             <li><Link href="/normativa" className="hover:text-primary transition-colors">Normativa</Link></li>
                             <li><Link href="/concursos" className="hover:text-primary transition-colors">Concursos</Link></li>
+                            <li><Link href="/liga-sansofe" className="hover:text-primary transition-colors">Liga Sansofé</Link></li>
                         </ul>
                     </div>
 
@@ -34,19 +35,29 @@ export function Footer() {
                     </div>
 
                     <div>
+                        <h4 className="font-heading font-semibold mb-4 text-foreground">Enlaces Externos</h4>
+                        <ul className="space-y-2 text-sm text-foreground/60">
+                            <li><a href="https://www.focde.com/" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">FOCDE</a></li>
+                            <li><span className="cursor-default">COM</span></li>
+                            <li><span className="cursor-default">COMESP</span></li>
+                            <li><span className="cursor-default">Revista Pájaros</span></li>
+                        </ul>
+                    </div>
+
+                    <div>
                         <h4 className="font-heading font-semibold mb-4 text-foreground">Contacto</h4>
                         <ul className="space-y-3 text-sm text-foreground/60">
                             <li className="flex items-start gap-3">
                                 <MapPin className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                                <span>Sede Central FOCCA-FOCDE</span>
+                                <span>Calle el hoyo 14-A, Vilaflor de Chasna 38614</span>
                             </li>
                             <li className="flex items-center gap-3">
                                 <Mail className="w-4 h-4 text-primary shrink-0" />
-                                <a href="mailto:info@focca-focde.com" className="hover:text-primary transition-colors">info@focca-focde.com</a>
+                                <a href="mailto:foycca@gmail.com" className="hover:text-primary transition-colors">foycca@gmail.com</a>
                             </li>
                             <li className="flex items-center gap-3">
                                 <Phone className="w-4 h-4 text-primary shrink-0" />
-                                <span>+34 000 000 000</span>
+                                <span>+34 607302585</span>
                             </li>
                         </ul>
                     </div>

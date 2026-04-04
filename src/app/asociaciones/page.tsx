@@ -2,14 +2,11 @@ import Image from "next/image";
 
 export default function AsociacionesPage() {
     const asociaciones = [
-        { name: "A.O. AviLancelot", province: "Lancelot", image: "/assets/asociaciones/AO AviLancelot.jpg" },
-        { name: "A.O. Sur", province: "Sur", image: "/assets/asociaciones/AOSUR.JPG" },
-        { name: "Costa Adeje", province: "Adeje", image: "/assets/asociaciones/Costa Adeje.jpg" },
-        { name: "La Aparcería", province: "Aparcería", image: "/assets/asociaciones/LA APARCERIA.JPG" },
+        { name: "A.O. AviLancelot", province: "Lanzarote", image: "/assets/asociaciones/AO AviLancelot.jpg" },
+        { name: "Costa Adeje", province: "Tenerife", image: "/assets/asociaciones/Costa Adeje.jpg" },
+        { name: "La Aparcería", province: "Gran Canaria", image: "/assets/asociaciones/LA APARCERIA.JPG" },
         { name: "Maxorata", province: "Fuerteventura", image: "/assets/asociaciones/MAXORATA.jpg" },
-        { name: "Pinzón", province: "Gran Canaria", image: "/assets/asociaciones/PINZON .jpg" },
-        { name: "Norwich", province: "Tenerife", image: "/assets/asociaciones/logo NORWICH.jpeg" },
-        { name: "Tacuense", province: "Tacoronte", image: "/assets/asociaciones/logo TACUENSE.jpeg" },
+        { name: "Tacuense", province: "Tenerife", image: "/assets/asociaciones/logo TACUENSE.jpeg" },
     ];
 
     return (

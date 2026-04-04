@@ -3,9 +3,10 @@ import { Download, FileText } from "lucide-react";
 export default function NormativaPage() {
     const documents = [
         { title: "Estatutos FOCCA-FOCDE", desc: "Reglamento base de nuestra federación.", size: "1.2 MB" },
-        { title: "Reglamento General de Concursos", desc: "Normas de participación aplicables.", size: "0.8 MB" },
-        { title: "Normativa de Jueces", desc: "Código de actuación de colegiados.", size: "2.1 MB" },
-        { title: "Bases Liga Canaria SANSOFÉ", desc: "Información y bases oficiales.", size: "196 KB", file: "SANSOFÉ.pdf" }
+        { title: "Reglamento de Regimen Interno", desc: "Normas de funcionamiento interno.", size: "0.8 MB" },
+        { title: "Reglamento Campeonato Ornitologico de Canarias", desc: "Normas de participación aplicables.", size: "2.1 MB" },
+        { title: "Reglamento Liga Ornitologica Canaria Sansofe", desc: "Información y bases oficiales.", size: "196 KB", file: "SANSOFÉ.pdf" },
+        { title: "Normativa de Parteos de Aves", desc: "Directrices para el parteo de aves.", size: "1.5 MB" }
     ];
 
     return (

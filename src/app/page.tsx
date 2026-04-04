@@ -10,10 +10,10 @@ export default function Home() {
         {/* Background Image with Overlay */}
         <div className="absolute inset-0 z-0">
           <Image
-            src="/assets/federacion/RYQV6148.JPG"
+            src="/assets/federacion/cabeceraFOCCA.jpeg"
             alt="FOCCA-FOCDE Event"
             fill
-            className="object-cover object-center"
+            className="object-cover object-top md:object-center"
             priority
           />
           <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/80 to-transparent dark:from-background/95 dark:via-background/90" />

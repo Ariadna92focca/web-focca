@@ -38,9 +38,9 @@ export function Footer() {
                         <h4 className="font-heading font-semibold mb-4 text-foreground">Enlaces Externos</h4>
                         <ul className="space-y-2 text-sm text-foreground/60">
                             <li><a href="https://www.focde.com/" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">FOCDE</a></li>
-                            <li><span className="cursor-default">COM</span></li>
-                            <li><span className="cursor-default">COMESP</span></li>
-                            <li><span className="cursor-default">Revista Pájaros</span></li>
+                            <li><a href="https://conforni.org/en" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">COM</a></li>
+                            <li><a href="https://comesp.es/" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">COMESP</a></li>
+                            <li><a href="https://www.focde.com/revista-pajaros/sumarios-revista" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">Revista Pájaros</a></li>
                         </ul>
                     </div>
 

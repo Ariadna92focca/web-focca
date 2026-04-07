@@ -1,12 +1,14 @@
+"use client";
+
 import { Download, FileText } from "lucide-react";
 
 export default function NormativaPage() {
     const documents = [
-        { title: "Estatutos FOCCA-FOCDE", desc: "Reglamento base de nuestra federación.", size: "1.2 MB" },
+        { title: "Estatutos FOCCA-FOCDE", desc: "Reglamento base de nuestra federación.", size: "813 KB", file: "/assets/normativas/20250823 Estatutos FOCCA-FOCDE.pdf" },
         { title: "Reglamento de Regimen Interno", desc: "Normas de funcionamiento interno.", size: "0.8 MB" },
-        { title: "Reglamento Campeonato Ornitologico de Canarias", desc: "Normas de participación aplicables.", size: "2.1 MB" },
-        { title: "Reglamento Liga Ornitologica Canaria Sansofe", desc: "Información y bases oficiales.", size: "196 KB", file: "SANSOFÉ.pdf" },
-        { title: "Normativa de Parteos de Aves", desc: "Directrices para el parteo de aves.", size: "1.5 MB" }
+        { title: "Reglamento Campeonato Ornitologico de Canarias", desc: "Normas de participación aplicables.", size: "1.2 MB", file: "/assets/normativas/Reglamento  COC.pdf" },
+        { title: "Reglamento Liga Ornitologica Canaria Sansofe", desc: "Información y bases oficiales.", size: "886 KB", file: "/assets/normativas/Reglamento Liga Canaria Sansofe.pdf" },
+        { title: "Normativa de Porteos de Aves", desc: "Directrices para el porteo de aves.", size: "652 KB", file: "/assets/normativas/Normativa Porteos.pdf" }
     ];
 
     return (
@@ -37,8 +39,14 @@ export default function NormativaPage() {
                         </div>
 
                         <a
-                            href={doc.file ? `/assets/federacion/${doc.file}` : "#"}
+                            href={doc.file ? doc.file : "#"}
                             target={doc.file ? "_blank" : "_self"}
+                            onClick={(e) => {
+                                if (!doc.file) {
+                                    e.preventDefault();
+                                    alert("Próximamente");
+                                }
+                            }}
                             className="inline-flex items-center gap-2 px-6 py-2.5 bg-secondary text-secondary-foreground text-sm font-medium rounded-xl hover:bg-secondary/80 transition-colors shrink-0"
                         >
                             <Download className="w-4 h-4" />

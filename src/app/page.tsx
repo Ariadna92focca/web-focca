@@ -10,13 +10,13 @@ export default function Home() {
         {/* Background Image with Overlay */}
         <div className="absolute inset-0 z-0">
           <Image
-            src="/assets/federacion/cabeceraFOCCA.jpeg"
+            src="/assets/federacion/cabeceraFOCCA.PNG"
             alt="FOCCA-FOCDE Event"
             fill
-            className="object-cover object-top md:object-center"
+            className="object-cover object-top md:object-[center_15%]"
             priority
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/80 to-transparent dark:from-background/95 dark:via-background/90" />
+          <div className="absolute inset-0 bg-gradient-to-r from-background/80 via-background/50 to-transparent dark:from-background/80 dark:via-background/60" />
         </div>
 
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10 flex flex-col md:flex-row items-center gap-12">

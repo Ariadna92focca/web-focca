@@ -9,7 +9,7 @@ export function Footer() {
                     <div className="md:col-span-1 lg:col-span-1 space-y-4">
                         <h3 className="font-heading font-bold text-lg text-foreground">FOCCA-FOCDE</h3>
                         <p className="text-sm text-foreground/60 leading-relaxed">
-                            Federación Ornitológica Cultural y Deportiva, dedicada a la promoción, preservación y disfrute de la ornitología.
+                            Federación ornitológica y cultural canario ancestral, dedicada a la promoción, preservación y disfrute de la ornitología.
                         </p>
                     </div>
 

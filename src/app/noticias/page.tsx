@@ -1,8 +1,7 @@
 export default function NoticiasPage() {
     const noticias = [
         { title: "Abierto plazo de solicitud de anillas 2027", date: "15 Octubre, 2026", excerpt: "Recordamos a todas las asociaciones que el plazo para la primera convocatoria de anillas ya está abierto." },
-        { title: "Resultados Liga Canaria SANSOFÉ", date: "02 Octubre, 2026", excerpt: "Ya están disponibles las clasificaciones generales de la última jornada disputada este fin de semana." },
-        { title: "Nueva normativa para exposiciones", date: "28 Septiembre, 2026", excerpt: "Se ha actualizado el reglamento general de concursos. Rogamos a los participantes revisen los cambios." }
+        { title: "Resultados Liga Canaria SANSOFÉ", date: "02 Octubre, 2026", excerpt: "Ya están disponibles las clasificaciones generales de la última jornada disputada este fin de semana." }
     ];
 
     return (

@@ -3,7 +3,6 @@ import Image from "next/image";
 export default function GaleriaPage() {
     const images = [
         "/assets/federacion/FOCCA.JPG",
-        "/assets/federacion/RYQV6148.JPG",
         "/assets/asociaciones/AO AviLancelot.jpg",
         "/assets/asociaciones/Costa Adeje.jpg",
         "/assets/asociaciones/MAXORATA.jpg",

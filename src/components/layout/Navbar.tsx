@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState } from "react";
-import { Menu, X, Bird, FileText, Users, Images, Link as LinkIcon } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Menu, X, Sun, Moon } from "lucide-react";
+import { useTheme } from "next-themes";
 
 export function Navbar() {
     const [isOpen, setIsOpen] = useState(false);
@@ -33,8 +34,8 @@ export function Navbar() {
                                 <Image src="/assets/federacion/focca logo.png" alt="FOCCA Logo" fill className="object-contain p-1 lg:p-1.5" />
                             </div>
                             <div className="flex flex-col justify-center">
-                                <span className="font-heading font-extrabold text-2xl sm:text-3xl md:text-4xl lg:text-4xl tracking-tight text-foreground leading-none mb-1">FOCCA</span>
-                                <span className="font-sans text-xs sm:text-sm lg:text-sm font-bold text-primary max-w-[160px] sm:max-w-[200px] leading-tight">Federación ornitológica y cultural canario ancestral</span>
+                                <span className="font-heading font-extrabold text-2xl sm:text-3xl md:text-4xl lg:text-4xl tracking-tight text-foreground leading-none mb-1">FOCCA-FOCDE</span>
+                                <span className="font-sans text-xs sm:text-sm lg:text-sm font-bold text-primary max-w-[160px] sm:max-w-[200px] leading-tight">Federación Ornitológica y Cultural Canario Ancestral</span>
                             </div>
                         </Link>
 
@@ -53,13 +54,16 @@ export function Navbar() {
                     {/* Fila inferior de Nav (Desktop completo) */}
                     <nav className="hidden md:flex w-full justify-center items-center gap-6 lg:gap-10 xl:gap-14 border-t border-border/60 pt-3 pb-0">
                         <NavLinks />
-                        <div className="h-5 w-px bg-border mx-2"></div>
-                        <Link
-                            href="/privado"
-                            className="inline-flex h-9 items-center justify-center rounded-xl bg-primary px-6 text-sm lg:text-base font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                        >
-                            Área Privada
-                        </Link>
+                        <div className="flex items-center gap-2">
+                            <ThemeToggle />
+                            <div className="h-5 w-px bg-border mx-2 hidden lg:block"></div>
+                            <Link
+                                href="/privado"
+                                className="inline-flex h-9 items-center justify-center rounded-xl bg-primary px-6 text-sm lg:text-base font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                            >
+                                Área Privada
+                            </Link>
+                        </div>
                     </nav>
                 </div>
             </div>
@@ -69,13 +73,16 @@ export function Navbar() {
                 <div className="md:hidden absolute top-full left-0 w-full bg-background border-b border-border shadow-xl py-6 px-6 flex flex-col gap-3">
                     <NavLinks mobile onClick={() => setIsOpen(false)} />
                     <div className="w-full h-px bg-border/50 my-2"></div>
-                    <Link
-                        href="/privado"
-                        onClick={() => setIsOpen(false)}
-                        className="inline-flex h-12 w-full mt-2 items-center justify-center rounded-xl bg-primary px-6 text-base font-bold text-primary-foreground shadow-md transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    >
-                        Área Privada
-                    </Link>
+                    <div className="flex w-full gap-2 mt-2">
+                        <Link
+                            href="/privado"
+                            onClick={() => setIsOpen(false)}
+                            className="flex-1 inline-flex h-12 items-center justify-center rounded-xl bg-primary px-6 text-base font-bold text-primary-foreground shadow-md transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        >
+                            Área Privada
+                        </Link>
+                        <ThemeToggle />
+                    </div>
                 </div>
             )}
         </header>
@@ -108,5 +115,28 @@ function NavLinks({ mobile, onClick }: { mobile?: boolean, onClick?: () => void 
                 </Link>
             ))}
         </>
+    );
+}
+
+function ThemeToggle() {
+    const { theme, setTheme } = useTheme();
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    if (!mounted) {
+        return <div className="p-2.5 w-10 h-10 md:w-9 md:h-9"></div>;
+    }
+
+    return (
+        <button
+            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            className="p-2.5 md:p-2 bg-background border border-border shadow-sm text-foreground hover:bg-secondary rounded-xl md:rounded-lg transition-colors flex items-center justify-center h-12 w-12 md:h-9 md:w-9 shrink-0"
+            aria-label="Toggle dark mode"
+        >
+            {theme === 'dark' ? <Moon className="w-5 h-5 md:w-4 md:h-4 text-foreground" /> : <Sun className="w-5 h-5 md:w-4 md:h-4 text-foreground" />}
+        </button>
     );
 }

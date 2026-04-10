@@ -7,7 +7,7 @@ export default function QuienesSomosPage() {
                         Quiénes Somos
                     </h1>
                     <p className="text-foreground/70 text-lg">
-                        Conoce la historia, misión y objetivos que guían a la Federación Ornitológica Cultural y Deportiva (FOCCA-FOCDE).
+                        Conoce la historia, misión y objetivos que guían a la Federación regional FOCDE.
                     </p>
                 </div>
             </div>

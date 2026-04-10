@@ -2,19 +2,19 @@ import { UserCircle } from "lucide-react";
 
 export default function JuntaDirectivaPage() {
     const comiteEjecutivo = [
-        { name: "D. Abel Tomás Herrera Hernandez", role: "Presidente" },
-        { name: "D. Jose Juan León Diaz", role: "Vicepresidente" },
-        { name: "D. Pablo Alexis Ramirez Gonzalez", role: "Secretario" },
-        { name: "D. Jose Francisco Herrera Hernandez", role: "Tesorero" },
+        { name: "D. Abel Tomás Herrera Hernández", role: "Presidente" },
+        { name: "D. José Juan León Díaz", role: "Vicepresidente" },
+        { name: "D. Pablo Alexis Ramírez González", role: "Secretario" },
+        { name: "D. José Francisco Herrera Hernández", role: "Tesorero" },
     ];
 
     const juntaDirectiva = [
         ...comiteEjecutivo,
-        { name: "D. Antonio Castellano Dominguez", role: "Presidente Avilancelot" },
-        { name: "D. Marcos Cazorla Sanchez", role: "Presidente La Aparcería de Vecindario" },
+        { name: "D. Antonio Castellano Domínguez", role: "Presidente Avilancelot" },
+        { name: "D. Marcos Cazorla Sánchez", role: "Presidente La Aparcería de Vecindario" },
         { name: "D. Pedro Rivero Reyes", role: "Presidente Maxorata" },
         { name: "D. Juan Manuel León Barreto", role: "Representante Tacuense" },
-        { name: "Da. Ariadna V. Herrera Medina", role: "Representante de Costa Adeje" },
+        { name: "Dña. Ariadna V. Herrera Medina", role: "Representante de Costa Adeje" },
     ];
 
     return (

@@ -121,7 +121,7 @@ export default function Home() {
               <ul className="space-y-4 mt-4">
                 {[
                   "Asesoramiento técnico y administrativo continuo.",
-                  "Organización de concursos de ámbito regional y nacional.",
+                  "Organización de concursos de ámbito local y regional.",
                   "Facilitación de trámites como peticiones de anillas."
                 ].map((item, i) => (
                   <li key={i} className="flex items-start gap-3">

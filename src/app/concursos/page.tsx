@@ -3,8 +3,7 @@ import { Calendar, MapPin } from "lucide-react";
 export default function ConcursosPage() {
     const concursos = [
         { name: "VII Concurso Ornitológico Regional", date: "15-20 Noviembre, 2026", loc: "Pabellón Central", status: "Próximo" },
-        { name: "Liga Canaria SANSOFÉ 2026", date: "Octubre - Diciembre, 2026", loc: "Sedes Múltiples", status: "En curso" },
-        { name: "Campeonato Nacional de Canto", date: "10-15 Diciembre, 2026", loc: "Recinto Ferial", status: "Inscripciones Abiertas" }
+        { name: "Liga Canaria SANSOFÉ 2026", date: "Octubre - Diciembre, 2026", loc: "Sedes Múltiples", status: "En curso" }
     ];
 
     return (

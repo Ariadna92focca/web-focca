@@ -5,9 +5,9 @@ export default function GaleriaPage() {
         "/assets/federacion/FOCCA.JPG",
         "/assets/federacion/RYQV6148.JPG",
         "/assets/asociaciones/AO AviLancelot.jpg",
-        "/assets/asociaciones/AOSUR.JPG",
         "/assets/asociaciones/Costa Adeje.jpg",
         "/assets/asociaciones/MAXORATA.jpg",
+        "/assets/asociaciones/logo TACUENSE.jpeg",
     ];
 
     return (

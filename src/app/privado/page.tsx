@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
-import { Bird, FileUp, LogOut, CheckCircle2, AlertCircle, FileText, Download, ShieldCheck, Building2, FolderArchive, Users, Plus, Trash2, Filter, Loader2, UserCircle, Newspaper } from "lucide-react";
+import { Bird, FileUp, LogOut, CheckCircle2, AlertCircle, FileText, Download, ShieldCheck, Building2, FolderArchive, Users, Plus, Trash2, Filter, Loader2, UserCircle, Newspaper, Mail } from "lucide-react";
 import { Session } from "@supabase/supabase-js";
 
 interface FocdeUser {
@@ -74,6 +74,16 @@ interface Noticia {
     created_at: string;
 }
 
+interface MensajeContacto {
+    id: string;
+    nombre: string;
+    email: string;
+    asunto: string;
+    mensaje: string;
+    fecha_envio: string;
+    leido: boolean;
+}
+
 export default function PrivadoPage() {
     const [session, setSession] = useState<Session | null>(null);
     const [userData, setUserData] = useState<FocdeUser | null>(null);
@@ -85,7 +95,7 @@ export default function PrivadoPage() {
     const [authError, setAuthError] = useState("");
 
     // App State
-    const [activeTab, setActiveTab] = useState<'anillas' | 'generales' | 'miembros' | 'normativas' | 'directiva' | 'asociaciones' | 'noticias'>('anillas');
+    const [activeTab, setActiveTab] = useState<'anillas' | 'generales' | 'miembros' | 'normativas' | 'directiva' | 'asociaciones' | 'noticias' | 'mensajes'>('anillas');
     const [adminViewMode, setAdminViewMode] = useState<'global' | 'asociacion'>('global');
     const [selectedAsocId, setSelectedAsocId] = useState<string>('');
     const [asociacionesList, setAsociacionesList] = useState<Asociacion[]>([]);
@@ -121,6 +131,9 @@ export default function PrivadoPage() {
     const [noticias, setNoticias] = useState<Noticia[]>([]);
     const [nuevaNoticia, setNuevaNoticia] = useState({ titulo: '', fecha: new Date().toISOString().split('T')[0] });
     const [noticiaMessage, setNoticiaMessage] = useState({ type: '', text: '' });
+
+    // Mensajes de contacto management states
+    const [mensajesContacto, setMensajesContacto] = useState<MensajeContacto[]>([]);
 
 
     // Data Collections
@@ -260,6 +273,10 @@ export default function PrivadoPage() {
         let q7 = supabase.from('noticias').select('*').order('fecha', { ascending: false });
         const { data: d7 } = await q7;
         setNoticias((d7 || []) as Noticia[]);
+
+        let q8 = supabase.from('mensajes_contacto').select('*').order('fecha_envio', { ascending: false });
+        const { data: d8 } = await q8;
+        setMensajesContacto((d8 || []) as MensajeContacto[]);
     };
 
     // UseEffect to trigger re-fetch when admin changes association filter
@@ -755,6 +772,18 @@ export default function PrivadoPage() {
         }
     };
 
+    const handleDeleteMensaje = async (id: string) => {
+        if (!confirm("¿Seguro que deseas eliminar este mensaje de contacto?")) return;
+        try {
+            const { error } = await supabase.from('mensajes_contacto').delete().eq('id', id);
+            if (error) throw error;
+            setMensajesContacto(prev => prev.filter(m => m.id !== id));
+        } catch (error) {
+            console.error("Error al eliminar mensaje:", error);
+            alert("Error al eliminar el mensaje de contacto.");
+        }
+    };
+
     if (loading) {
         return <div className="min-h-[60vh] flex items-center justify-center">Cargando...</div>;
     }
@@ -938,6 +967,15 @@ export default function PrivadoPage() {
                                 >
                                     <Newspaper className="w-4 h-4" />
                                     Noticias
+                                </button>
+                            )}
+                            {isAdmin && (
+                                <button
+                                    onClick={() => setActiveTab('mensajes')}
+                                    className={`flex items-center gap-2 pb-3 px-2 whitespace-nowrap transition-colors border-b-2 font-medium ${activeTab === 'mensajes' ? 'border-primary text-primary' : 'border-transparent text-foreground/60 hover:text-foreground'}`}
+                                >
+                                    <Mail className="w-4 h-4" />
+                                    Mensajes Externos
                                 </button>
                             )}
                         </div>
@@ -1612,6 +1650,74 @@ export default function PrivadoPage() {
                                                             <Trash2 className="w-4 h-4" />
                                                         </button>
                                                     </div>
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* TAB 8: Gestión de Mensajes Recibidos */}
+                        {activeTab === 'mensajes' && isAdmin && (
+                            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                                <div className="bg-white dark:bg-card p-6 sm:p-8 rounded-3xl border border-border shadow-sm">
+                                    <div className="flex items-center gap-4 mb-6">
+                                        <div className="p-3 bg-emerald-100 dark:bg-emerald-900/30 rounded-xl text-primary">
+                                            <Mail className="w-6 h-6" />
+                                        </div>
+                                        <div>
+                                            <h2 className="font-heading text-xl font-bold text-foreground">Mensajes de Contacto Recibidos</h2>
+                                            <p className="text-sm text-foreground/60">Consulta y gestiona las dudas y trámites enviados por los usuarios desde la página de contacto externa.</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-4">
+                                        {mensajesContacto.length === 0 ? (
+                                            <p className="text-center py-12 text-foreground/45 italic text-sm border-2 border-dashed border-border rounded-2xl">
+                                                No se han recibido mensajes de contacto externos.
+                                            </p>
+                                        ) : (
+                                            mensajesContacto.map((msg) => (
+                                                <div 
+                                                    key={msg.id} 
+                                                    className="p-5 sm:p-6 border border-border/60 hover:border-border transition-all rounded-2xl bg-slate-50/40 dark:bg-background/20 space-y-3 relative group"
+                                                >
+                                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border/40 pb-3">
+                                                        <div className="min-w-0 flex-grow pr-2">
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <span className="font-bold text-foreground text-sm truncate max-w-[200px] sm:max-w-xs">{msg.nombre}</span>
+                                                                <a 
+                                                                    href={`mailto:${msg.email}`} 
+                                                                    className="text-xs text-primary hover:underline font-mono truncate max-w-[180px] sm:max-w-[250px]"
+                                                                >
+                                                                    {msg.email}
+                                                                </a>
+                                                            </div>
+                                                            <h4 className="font-semibold text-foreground text-sm mt-1">{msg.asunto}</h4>
+                                                        </div>
+                                                        <div className="flex items-center gap-3 shrink-0 self-start sm:self-center">
+                                                            <span className="text-[11px] text-foreground/45 font-semibold">
+                                                                {new Date(msg.fecha_envio).toLocaleDateString('es-ES', { 
+                                                                    day: 'numeric', 
+                                                                    month: 'long', 
+                                                                    year: 'numeric',
+                                                                    hour: '2-digit',
+                                                                    minute: '2-digit'
+                                                                })}
+                                                            </span>
+                                                            <button 
+                                                                onClick={() => handleDeleteMensaje(msg.id)} 
+                                                                className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-xl transition-all"
+                                                                title="Eliminar mensaje permanentemente"
+                                                            >
+                                                                <Trash2 className="w-4 h-4" />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                    <p className="text-sm text-foreground/75 leading-relaxed bg-white dark:bg-black/10 p-4 rounded-xl whitespace-pre-wrap select-text border border-border/40">
+                                                        {msg.mensaje}
+                                                    </p>
                                                 </div>
                                             ))
                                         )}

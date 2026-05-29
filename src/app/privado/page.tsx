@@ -124,9 +124,18 @@ export default function PrivadoPage() {
             }
         });
 
+        // Failsafe timeout de 5 segundos para asegurar que no se quede bloqueado en "Cargando..."
+        const fallback = setTimeout(() => {
+            if (isMounted) {
+                console.warn("⚠️ Forzando fin de carga por timeout de seguridad...");
+                setLoading(false);
+            }
+        }, 5000);
+
         return () => {
             isMounted = false;
             subscription.unsubscribe();
+            clearTimeout(fallback);
         };
     }, []);
 

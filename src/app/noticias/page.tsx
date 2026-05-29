@@ -90,20 +90,20 @@ export default function NoticiasPage() {
 
     return (
         <div className="w-full flex-grow bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 min-h-screen">
-            {/* Elegant Header Banner */}
-            <div className="relative overflow-hidden bg-gradient-to-r from-rose-600 via-rose-500 to-indigo-600 py-20 lg:py-24 text-white shadow-md">
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(255,255,255,0.1),transparent)] pointer-events-none" />
-                <div className="absolute -bottom-10 -right-10 w-96 h-96 bg-white/10 rounded-full blur-3xl pointer-events-none" />
+            {/* Elegant Soft Green Header Banner */}
+            <div className="relative overflow-hidden bg-gradient-to-r from-primary via-emerald-800 to-teal-800 py-20 lg:py-24 text-white shadow-md">
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(255,255,255,0.08),transparent)] pointer-events-none" />
+                <div className="absolute -bottom-10 -right-10 w-96 h-96 bg-white/5 rounded-full blur-3xl pointer-events-none" />
                 
                 <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center max-w-4xl relative z-10">
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-white/20 backdrop-blur-md text-white mb-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-white/10 backdrop-blur-md text-white/90 mb-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
                         <Newspaper className="w-3.5 h-3.5" />
                         Boletín Oficial
                     </span>
                     <h1 className="font-heading text-4xl sm:text-5xl md:text-6xl font-extrabold text-white mb-6 tracking-tight drop-shadow-sm animate-in fade-in slide-in-from-bottom-3 duration-500">
                         Actualidad y Circulares
                     </h1>
-                    <p className="text-white/90 text-lg sm:text-xl font-medium max-w-2xl mx-auto leading-relaxed animate-in fade-in slide-in-from-bottom-4 duration-700">
+                    <p className="text-white/80 text-lg sm:text-xl font-medium max-w-2xl mx-auto leading-relaxed animate-in fade-in slide-in-from-bottom-4 duration-700">
                         Mantente informado sobre las últimas normativas, circulares oficiales y convocatorias de la Federación FOCCA-FOCDE.
                     </p>
                 </div>
@@ -139,7 +139,7 @@ export default function NoticiasPage() {
                     </div>
                 ) : !error && noticias.length === 0 ? (
                     <div className="text-center py-20 max-w-md mx-auto">
-                        <div className="w-20 h-20 bg-rose-50 dark:bg-rose-950/20 rounded-full flex items-center justify-center mx-auto mb-6 text-rose-600 dark:text-rose-400 border-2 border-dashed border-rose-200 dark:border-rose-900/50">
+                        <div className="w-20 h-20 bg-primary/5 dark:bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-6 text-primary dark:text-emerald-400 border-2 border-dashed border-primary/20 dark:border-emerald-900/50">
                             <Newspaper className="w-10 h-10" />
                         </div>
                         <h2 className="font-heading text-xl font-bold text-foreground mb-2">No hay comunicados</h2>
@@ -155,14 +155,14 @@ export default function NoticiasPage() {
                                 key={item.id} 
                                 className="bg-white dark:bg-card rounded-3xl border border-border/50 overflow-hidden shadow-sm flex flex-col group hover:-translate-y-1.5 transition-all hover:shadow-xl duration-300 relative"
                             >
-                                {/* Background gradient or custom header */}
-                                <div className="aspect-video bg-gradient-to-br from-rose-500/10 via-rose-600/5 to-indigo-500/10 dark:from-rose-900/20 dark:to-indigo-950/20 flex flex-col items-center justify-center border-b border-border/40 relative overflow-hidden shrink-0">
+                                {/* Background gradient or custom header with soft green hues */}
+                                <div className="aspect-video bg-gradient-to-br from-primary/10 via-emerald-500/5 to-teal-500/10 dark:from-primary/20 dark:to-teal-950/20 flex flex-col items-center justify-center border-b border-border/40 relative overflow-hidden shrink-0">
                                     <div className="absolute inset-0 bg-grid-pattern opacity-10" />
-                                    <div className="p-4 bg-white/80 dark:bg-black/25 rounded-2xl shadow-sm border border-white/20 text-rose-600 dark:text-rose-400 group-hover:scale-110 transition-transform duration-300 relative z-10">
+                                    <div className="p-4 bg-white/80 dark:bg-black/25 rounded-2xl shadow-sm border border-white/20 text-primary dark:text-emerald-400 group-hover:scale-110 transition-transform duration-300 relative z-10">
                                         <FileText className="w-8 h-8" />
                                     </div>
                                     <div className="absolute bottom-3 left-4 right-4 flex justify-between items-center z-10">
-                                        <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-rose-600 text-white shadow-sm">
+                                        <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-primary text-primary-foreground shadow-sm">
                                             {item.url_documento.split(".").pop()?.toUpperCase() || "DOC"}
                                         </span>
                                     </div>
@@ -174,14 +174,14 @@ export default function NoticiasPage() {
                                         {formatDate(item.fecha)}
                                     </div>
                                     
-                                    <h3 className="font-heading text-lg font-bold text-foreground mb-4 group-hover:text-rose-600 dark:group-hover:text-rose-400 transition-colors line-clamp-2 leading-snug">
+                                    <h3 className="font-heading text-lg font-bold text-foreground mb-4 group-hover:text-primary dark:group-hover:text-emerald-400 transition-colors line-clamp-2 leading-snug">
                                         {item.titulo}
                                     </h3>
                                     
                                     <div className="mt-auto pt-4 border-t border-border/30 flex justify-between items-center">
                                         <button 
                                             onClick={() => openNoticia(item)}
-                                            className="inline-flex items-center gap-1 text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-350 font-bold text-sm group/btn"
+                                            className="inline-flex items-center gap-1 text-primary dark:text-emerald-400 hover:text-primary/80 dark:hover:text-emerald-350 font-bold text-sm group/btn"
                                         >
                                             Leer documento 
                                             <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
@@ -202,7 +202,7 @@ export default function NoticiasPage() {
                                                     link.remove();
                                                 }
                                             }}
-                                            className="p-2 text-foreground/50 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-slate-50 dark:hover:bg-slate-900 rounded-xl transition-all"
+                                            className="p-2 text-foreground/50 hover:text-primary dark:hover:text-emerald-400 hover:bg-slate-50 dark:hover:bg-slate-900 rounded-xl transition-all"
                                             title="Descargar boletín oficial"
                                         >
                                             <Download className="w-4.5 h-4.5" />
@@ -222,7 +222,7 @@ export default function NoticiasPage() {
                         {/* Modal Header */}
                         <div className="px-6 py-4 border-b border-border/60 dark:border-border/20 flex items-center justify-between bg-slate-50 dark:bg-black/20 shrink-0">
                             <div className="min-w-0 pr-4">
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 mb-1">
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-primary/10 dark:bg-primary/25 text-primary dark:text-emerald-400 mb-1">
                                     {selectedNoticia.url_documento.split(".").pop()?.toUpperCase() || "DOC"}
                                 </span>
                                 <h3 className="font-heading text-lg font-bold text-foreground truncate max-w-xs sm:max-w-md md:max-w-xl" title={selectedNoticia.titulo}>
@@ -263,7 +263,7 @@ export default function NoticiasPage() {
                                                 href={modalPublicUrl} 
                                                 target="_blank" 
                                                 rel="noopener noreferrer"
-                                                className="underline ml-auto shrink-0 text-rose-600"
+                                                className="underline ml-auto shrink-0 text-primary"
                                             >
                                                 Ver Pantalla Completa
                                             </a>
@@ -277,7 +277,7 @@ export default function NoticiasPage() {
                                 )
                             ) : (
                                 <div className="flex flex-col items-center gap-3 py-12">
-                                    <Loader2 className="w-8 h-8 text-rose-500 animate-spin" />
+                                    <Loader2 className="w-8 h-8 text-primary animate-spin" />
                                     <p className="text-sm text-foreground/50 font-medium">Obteniendo documento...</p>
                                 </div>
                             )}
@@ -302,7 +302,7 @@ export default function NoticiasPage() {
 
                                 <button 
                                     onClick={() => handleDownload(selectedNoticia)}
-                                    className="flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-700 hover:to-rose-800 text-white shadow-md hover:shadow-lg text-sm font-bold rounded-2xl transition-all grow sm:grow-0 group/btn"
+                                    className="flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-primary to-emerald-700 hover:from-primary/95 hover:to-emerald-700/95 text-white shadow-md hover:shadow-lg text-sm font-bold rounded-2xl transition-all grow sm:grow-0 group/btn"
                                 >
                                     <Download className="w-4.5 h-4.5 group-hover/btn:translate-y-0.5 transition-transform" />
                                     Descargar Documento Oficial

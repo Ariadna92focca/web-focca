@@ -242,7 +242,17 @@ export default function PrivadoPage() {
             
             const file = e.target.files[0];
             const fileExt = file.name.split('.').pop();
-            const fileName = `normativas/${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+            
+            // Sanitizamos el título para crear un nombre de archivo amigable
+            const cleanTitle = nuevaNormativa.titulo
+                .toLowerCase()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "") // eliminar acentos/tildes
+                .replace(/[^a-z0-9]+/g, "_")    // reemplazar espacios y caracteres especiales por guiones bajos
+                .replace(/^_+|_+$/g, "");       // recortar guiones bajos iniciales/finales
+            
+            const randomSuffix = Math.random().toString(36).substring(2, 7);
+            const fileName = `normativas/${cleanTitle}_${randomSuffix}.${fileExt}`;
             
             const sizeInMB = (file.size / (1024 * 1024)).toFixed(1);
             const sizeStr = file.size < 1024 * 1024 ? `${Math.round(file.size / 1024)} KB` : `${sizeInMB} MB`;

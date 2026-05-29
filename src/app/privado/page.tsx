@@ -134,6 +134,7 @@ export default function PrivadoPage() {
 
     // Mensajes de contacto management states
     const [mensajesContacto, setMensajesContacto] = useState<MensajeContacto[]>([]);
+    const [expandedMensajeId, setExpandedMensajeId] = useState<string | null>(null);
 
 
     // Data Collections
@@ -794,6 +795,13 @@ export default function PrivadoPage() {
         }
     };
 
+    const toggleMensajeExpanded = async (id: string, leido: boolean) => {
+        setExpandedMensajeId(prev => prev === id ? null : id);
+        if (!leido) {
+            await handleMarkAsRead(id);
+        }
+    };
+
     if (loading) {
         return <div className="min-h-[60vh] flex items-center justify-center">Cargando...</div>;
     }
@@ -982,14 +990,13 @@ export default function PrivadoPage() {
                             {isAdmin && (
                                 <button
                                     onClick={() => setActiveTab('mensajes')}
-                                    className={`flex items-center gap-2 pb-3 px-2 whitespace-nowrap transition-colors border-b-2 font-medium relative ${activeTab === 'mensajes' ? 'border-primary text-primary' : 'border-transparent text-foreground/60 hover:text-foreground'}`}
+                                    className={`flex items-center gap-2 pb-3 px-2 whitespace-nowrap transition-colors border-b-2 font-medium ${activeTab === 'mensajes' ? 'border-primary text-primary' : 'border-transparent text-foreground/60 hover:text-foreground'}`}
                                 >
                                     <Mail className="w-4 h-4" />
                                     Mensajes Externos
                                     {mensajesContacto.filter(m => !m.leido).length > 0 && (
-                                        <span className="absolute -top-1 -right-1 flex h-2 w-2">
-                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                                            <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
+                                        <span className="inline-flex items-center justify-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-500 text-white animate-pulse ml-1.5 shadow-sm shrink-0">
+                                            {mensajesContacto.filter(m => !m.leido).length}
                                         </span>
                                     )}
                                 </button>
@@ -1694,61 +1701,85 @@ export default function PrivadoPage() {
                                                 No se han recibido mensajes de contacto externos.
                                             </p>
                                         ) : (
-                                            mensajesContacto.map((msg) => (
-                                                <div 
-                                                    key={msg.id} 
-                                                    className="p-5 sm:p-6 border border-border/60 hover:border-border transition-all rounded-2xl bg-slate-50/40 dark:bg-background/20 space-y-3 relative group"
-                                                >
-                                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border/40 pb-3">
-                                                        <div className="min-w-0 flex-grow pr-2">
-                                                            <div className="flex items-center gap-2 flex-wrap">
-                                                                <span className="font-bold text-foreground text-sm truncate max-w-[200px] sm:max-w-xs flex items-center gap-1.5">
-                                                                    {!msg.leido && (
-                                                                        <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0 animate-pulse" title="Mensaje Nuevo (Sin leer)"></span>
-                                                                    )}
-                                                                    {msg.nombre}
-                                                                </span>
-                                                                <a 
-                                                                    href={`mailto:${msg.email}`} 
-                                                                    className="text-xs text-primary hover:underline font-mono truncate max-w-[180px] sm:max-w-[250px]"
-                                                                >
-                                                                    {msg.email}
-                                                                </a>
+                                            mensajesContacto.map((msg) => {
+                                                const isExpanded = expandedMensajeId === msg.id;
+                                                return (
+                                                    <div 
+                                                        key={msg.id} 
+                                                        className="border border-border/60 hover:border-border transition-all rounded-2xl bg-slate-50/40 dark:bg-background/20 relative group overflow-hidden flex flex-col"
+                                                    >
+                                                        <div 
+                                                            onClick={() => toggleMensajeExpanded(msg.id, msg.leido)}
+                                                            className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-5 sm:p-6 cursor-pointer select-none hover:bg-slate-100/50 dark:hover:bg-black/10 transition-colors"
+                                                        >
+                                                            <div className="min-w-0 flex-grow pr-2">
+                                                                <div className="flex items-center gap-2 flex-wrap">
+                                                                    <span className="font-bold text-foreground text-sm truncate max-w-[200px] sm:max-w-xs flex items-center gap-1.5">
+                                                                        {!msg.leido && (
+                                                                            <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0 animate-pulse" title="Mensaje Nuevo (Sin leer)"></span>
+                                                                        )}
+                                                                        {msg.nombre}
+                                                                    </span>
+                                                                    <a 
+                                                                        href={`mailto:${msg.email}`} 
+                                                                        onClick={(e) => e.stopPropagation()}
+                                                                        className="text-xs text-primary hover:underline font-mono truncate max-w-[180px] sm:max-w-[250px]"
+                                                                    >
+                                                                        {msg.email}
+                                                                    </a>
+                                                                </div>
+                                                                <h4 className="font-semibold text-foreground text-sm mt-1">{msg.asunto}</h4>
                                                             </div>
-                                                            <h4 className="font-semibold text-foreground text-sm mt-1">{msg.asunto}</h4>
-                                                        </div>
-                                                        <div className="flex items-center gap-3 shrink-0 self-start sm:self-center">
-                                                            {!msg.leido && (
+                                                            <div className="flex items-center gap-3 shrink-0 self-end sm:self-center">
+                                                                {!msg.leido && (
+                                                                    <button 
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            handleMarkAsRead(msg.id);
+                                                                        }}
+                                                                        className="text-xs text-primary hover:text-primary-foreground hover:bg-primary/20 dark:hover:bg-primary/30 px-2.5 py-0.5 rounded-lg border border-primary/30 transition-all font-semibold shrink-0"
+                                                                    >
+                                                                       Marcar leído
+                                                                    </button>
+                                                                )}
+                                                                <span className="text-[11px] text-foreground/45 font-semibold">
+                                                                    {new Date(msg.fecha_envio).toLocaleDateString('es-ES', { 
+                                                                        day: 'numeric', 
+                                                                        month: 'long', 
+                                                                        year: 'numeric',
+                                                                        hour: '2-digit',
+                                                                        minute: '2-digit'
+                                                                    })}
+                                                                </span>
                                                                 <button 
-                                                                    onClick={() => handleMarkAsRead(msg.id)}
-                                                                    className="text-xs text-primary hover:text-primary-foreground hover:bg-primary/20 dark:hover:bg-primary/30 px-2.5 py-0.5 rounded-lg border border-primary/30 transition-all font-semibold shrink-0"
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        handleDeleteMensaje(msg.id);
+                                                                    }}
+                                                                    className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-xl transition-all"
+                                                                    title="Eliminar mensaje permanentemente"
                                                                 >
-                                                                    Marcar leído
+                                                                    <Trash2 className="w-4 h-4" />
                                                                 </button>
-                                                            )}
-                                                            <span className="text-[11px] text-foreground/45 font-semibold">
-                                                                {new Date(msg.fecha_envio).toLocaleDateString('es-ES', { 
-                                                                    day: 'numeric', 
-                                                                    month: 'long', 
-                                                                    year: 'numeric',
-                                                                    hour: '2-digit',
-                                                                    minute: '2-digit'
-                                                                })}
-                                                            </span>
-                                                            <button 
-                                                                onClick={() => handleDeleteMensaje(msg.id)} 
-                                                                className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-xl transition-all"
-                                                                title="Eliminar mensaje permanentemente"
-                                                            >
-                                                                <Trash2 className="w-4 h-4" />
-                                                            </button>
+                                                                <span className="text-foreground/40 shrink-0">
+                                                                    {isExpanded ? (
+                                                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4"><path d="m18 15-6-6-6 6"/></svg>
+                                                                    ) : (
+                                                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4"><path d="m6 9 6 6 6-6"/></svg>
+                                                                    )}
+                                                                </span>
+                                                            </div>
                                                         </div>
+                                                        {isExpanded && (
+                                                            <div className="px-5 pb-5 sm:px-6 sm:pb-6 border-t border-border/40 pt-4 bg-white dark:bg-black/5 animate-in slide-in-from-top-2 duration-200 select-text">
+                                                                <p className="text-sm text-foreground/75 leading-relaxed whitespace-pre-wrap select-text">
+                                                                    {msg.mensaje}
+                                                                </p>
+                                                            </div>
+                                                        )}
                                                     </div>
-                                                    <p className="text-sm text-foreground/75 leading-relaxed bg-white dark:bg-black/10 p-4 rounded-xl whitespace-pre-wrap select-text border border-border/40">
-                                                        {msg.mensaje}
-                                                    </p>
-                                                </div>
-                                            ))
+                                                );
+                                            })
                                         )}
                                     </div>
                                 </div>

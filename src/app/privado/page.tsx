@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
-import { Bird, FileUp, LogOut, CheckCircle2, AlertCircle, FileText, Download, ShieldCheck, Building2, FolderArchive, Users, Plus, Trash2, Filter } from "lucide-react";
+import { Bird, FileUp, LogOut, CheckCircle2, AlertCircle, FileText, Download, ShieldCheck, Building2, FolderArchive, Users, Plus, Trash2, Filter, Loader2 } from "lucide-react";
 import { Session } from "@supabase/supabase-js";
 
 interface FocdeUser {
@@ -47,6 +47,15 @@ interface Miembro {
     asociaciones?: Asociacion;
 }
 
+interface NormativaPublica {
+    id: string;
+    titulo: string;
+    descripcion: string;
+    size: string;
+    url_archivo: string;
+    fecha_subida: string;
+}
+
 export default function PrivadoPage() {
     const [session, setSession] = useState<Session | null>(null);
     const [userData, setUserData] = useState<FocdeUser | null>(null);
@@ -58,7 +67,7 @@ export default function PrivadoPage() {
     const [authError, setAuthError] = useState("");
 
     // App State
-    const [activeTab, setActiveTab] = useState<'anillas' | 'generales' | 'miembros'>('anillas');
+    const [activeTab, setActiveTab] = useState<'anillas' | 'generales' | 'miembros' | 'normativas'>('anillas');
     const [adminViewMode, setAdminViewMode] = useState<'global' | 'asociacion'>('global');
     const [selectedAsocId, setSelectedAsocId] = useState<string>('');
     const [asociacionesList, setAsociacionesList] = useState<Asociacion[]>([]);
@@ -71,22 +80,37 @@ export default function PrivadoPage() {
     const [guardandoMiembro, setGuardandoMiembro] = useState(false);
     const [miembroMessage, setMiembroMessage] = useState({ type: '', text: '' });
 
+    const [nuevaNormativa, setNuevaNormativa] = useState({ titulo: '', descripcion: '' });
+    const [isDraggingNormativa, setIsDraggingNormativa] = useState(false);
+
+
     // Data Collections
     const [documents, setDocuments] = useState<Documento[]>([]);
     const [documentosGenerales, setDocumentosGenerales] = useState<DocumentoGeneral[]>([]);
     const [miembros, setMiembros] = useState<Miembro[]>([]);
+    const [normativas, setNormativas] = useState<NormativaPublica[]>([]);
 
     useEffect(() => {
-        supabase.auth.getSession().then(async ({ data: { session } }) => {
+        let isMounted = true;
+
+        const initAuth = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!isMounted) return;
+            
             setSession(session);
             if (session) {
                 await fetchUserData(session.user.id);
             } else {
                 setLoading(false);
             }
-        });
+        };
 
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+        initAuth();
+
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+            if (event === 'INITIAL_SESSION') return; // Handled by getSession
+            if (!isMounted) return;
+
             setSession(session);
             if (session) {
                 await fetchUserData(session.user.id);
@@ -95,16 +119,19 @@ export default function PrivadoPage() {
                 setDocuments([]);
                 setDocumentosGenerales([]);
                 setMiembros([]);
+                setNormativas([]);
                 setLoading(false);
             }
         });
 
-        return () => subscription.unsubscribe();
+        return () => {
+            isMounted = false;
+            subscription.unsubscribe();
+        };
     }, []);
 
     const fetchUserData = async (userId: string) => {
         try {
-            setLoading(true);
             const { data, error } = await supabase
                 .from('focde_usuarios')
                 .select('*')
@@ -167,6 +194,10 @@ export default function PrivadoPage() {
         if (filterAsocId) q3 = q3.eq('asociacion_id', filterAsocId);
         const { data: d3 } = await q3;
         setMiembros((d3 || []) as unknown as Miembro[]);
+
+        let q4 = supabase.from('normativas_publicas').select('*').order('fecha_subida', { ascending: false });
+        const { data: d4 } = await q4;
+        setNormativas((d4 || []) as NormativaPublica[]);
     };
 
     // UseEffect to trigger re-fetch when admin changes association filter
@@ -184,6 +215,75 @@ export default function PrivadoPage() {
             }
         }
     }, [adminViewMode, selectedAsocId]);
+
+
+
+    const handleUploadNormativaDirect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.files || e.target.files.length === 0) return;
+        
+        if (!nuevaNormativa.titulo || !nuevaNormativa.descripcion) {
+            setUploadMessage({ type: 'error', text: 'Por favor, rellena el título y la descripción antes de subir el PDF.' });
+            e.target.value = '';
+            return;
+        }
+
+        try {
+            setUploading(true);
+            setUploadMessage({ type: '', text: '' });
+            
+            const file = e.target.files[0];
+            const fileExt = file.name.split('.').pop();
+            const fileName = `normativas/${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+            
+            const sizeInMB = (file.size / (1024 * 1024)).toFixed(1);
+            const sizeStr = file.size < 1024 * 1024 ? `${Math.round(file.size / 1024)} KB` : `${sizeInMB} MB`;
+
+            // Subida INMEDIATA desde el selector del archivo
+            const { error: uploadError } = await supabase.storage
+                .from('documentos')
+                .upload(fileName, file);
+
+            if (uploadError) throw uploadError;
+
+            const { error: dbError } = await supabase
+                .from('normativas_publicas')
+                .insert({
+                    titulo: nuevaNormativa.titulo,
+                    descripcion: nuevaNormativa.descripcion,
+                    size: sizeStr,
+                    url_archivo: fileName
+                });
+
+            if (dbError) throw dbError;
+
+            setNuevaNormativa({ titulo: '', descripcion: '' });
+            setUploadMessage({ type: 'success', text: "Normativa publicada con éxito." });
+            fetchAllData(); 
+            setTimeout(() => setUploadMessage({ type: '', text: '' }), 4000);
+            
+        } catch (error: any) {
+            console.error("Upload error caught:", error);
+            setUploadMessage({ type: 'error', text: error.message || "Error al subir la normativa" });
+        } finally {
+            setUploading(false);
+            e.target.value = '';
+        }
+    };
+
+    const handleDeleteNormativa = async (id: string, filePath: string) => {
+        if (!confirm("¿Seguro que deseas eliminar esta normativa pública?")) return;
+        try {
+            const { error: storageError } = await supabase.storage.from('documentos').remove([filePath]);
+            if (storageError) console.error("Could not delete file from storage", storageError);
+
+            const { error: dbError } = await supabase.from('normativas_publicas').delete().eq('id', id);
+            if (dbError) throw dbError;
+
+            setNormativas(prev => prev.filter(n => n.id !== id));
+        } catch (error) {
+            alert("Error al eliminar normativa.");
+        }
+    }
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -473,6 +573,15 @@ export default function PrivadoPage() {
                                 <Users className="w-4 h-4" />
                                 Miembros
                             </button>
+                            {isAdmin && (
+                                <button
+                                    onClick={() => setActiveTab('normativas')}
+                                    className={`flex items-center gap-2 pb-3 px-2 whitespace-nowrap transition-colors border-b-2 font-medium ${activeTab === 'normativas' ? 'border-primary text-primary' : 'border-transparent text-foreground/60 hover:text-foreground'}`}
+                                >
+                                    <FileText className="w-4 h-4" />
+                                    Normativas Públicas
+                                </button>
+                            )}
                         </div>
 
 
@@ -674,6 +783,85 @@ export default function PrivadoPage() {
                                     </div>
                                 </div>
 
+                            </div>
+                        )}
+
+                        {/* TAB 4: Normativas Públicas */}
+                        {activeTab === 'normativas' && isAdmin && (
+                            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                                {/* Upload Box */}
+                                <div className="bg-white dark:bg-card p-6 sm:p-8 rounded-3xl border border-border shadow-sm">
+                                    <div className="flex items-center gap-4 mb-6">
+                                        <div className="p-3 bg-emerald-100 dark:bg-emerald-900/30 rounded-xl text-emerald-600 dark:text-emerald-400">
+                                            <FileText className="w-6 h-6" />
+                                        </div>
+                                        <div>
+                                            <h2 className="font-heading text-xl font-bold text-foreground">Añadir Nueva Normativa</h2>
+                                            <p className="text-sm text-foreground/60">Selecciona o arrastra un PDF, revisa los datos y publícalo.</p>
+                                        </div>
+                                    </div>
+
+                                    {uploadMessage.text && (
+                                        <div className={`p-4 rounded-xl text-sm font-medium flex items-center gap-2 mb-6 ${uploadMessage.type === 'error' ? 'bg-red-50 text-red-600 border border-red-200' : 'bg-emerald-50 text-emerald-600 border border-emerald-200'}`}>
+                                            {uploadMessage.type === 'error' ? <AlertCircle className="w-5 h-5 shrink-0" /> : <CheckCircle2 className="w-5 h-5 shrink-0" />}
+                                            {uploadMessage.text}
+                                        </div>
+                                    )}
+
+                                    <div className="space-y-4">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div className="space-y-1">
+                                                <label className="text-sm font-medium text-foreground">Título de la Normativa</label>
+                                                <input type="text" value={nuevaNormativa.titulo} onChange={e => setNuevaNormativa({ ...nuevaNormativa, titulo: e.target.value })} className="w-full border border-border/60 bg-background rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary/50 outline-none" placeholder="Ej. Estatutos FOCCA-FOCDE" />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-sm font-medium text-foreground">Descripción breve</label>
+                                                <input type="text" value={nuevaNormativa.descripcion} onChange={e => setNuevaNormativa({ ...nuevaNormativa, descripcion: e.target.value })} className="w-full border border-border/60 bg-background rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary/50 outline-none" placeholder="Ej. Reglamento base de nuestra federación" />
+                                            </div>
+                                        </div>
+
+                                        <div className="flex justify-end pt-2 border-t border-border/50">
+                                            <label className={`flex items-center gap-2 px-6 py-2.5 font-medium rounded-xl transition-colors ${(!nuevaNormativa.titulo || !nuevaNormativa.descripcion || uploading) ? 'bg-emerald-600/50 text-white cursor-not-allowed' : 'bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer'}`}>
+                                                {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileUp className="w-4 h-4" />}
+                                                {uploading ? "Subiendo..." : "Seleccionar y Subir PDF"}
+                                                <input 
+                                                    type="file" 
+                                                    className="hidden" 
+                                                    accept=".pdf" 
+                                                    disabled={!nuevaNormativa.titulo || !nuevaNormativa.descripcion || uploading}
+                                                    onChange={handleUploadNormativaDirect} 
+                                                />
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* List Box */}
+                                <div className="bg-white dark:bg-card p-6 sm:p-8 rounded-3xl border border-border shadow-sm">
+                                    <h2 className="font-heading text-xl font-bold text-foreground mb-6">Normativas Publicadas</h2>
+                                    <div className="space-y-3">
+                                        {normativas.length === 0 ? (
+                                            <p className="text-center py-8 text-foreground/40 italic text-sm border-2 border-dashed border-border rounded-xl">No hay normativas publicadas.</p>
+                                        ) : (
+                                            normativas.map((doc) => (
+                                                <div key={doc.id} className="flex flex-col sm:flex-row gap-4 sm:items-center justify-between p-4 border border-border/60 hover:border-border transition-colors rounded-2xl bg-slate-50/50 dark:bg-background/20 group">
+                                                    <div className="flex gap-4 items-start sm:items-center">
+                                                        <div className="p-3 bg-white dark:bg-background rounded-xl shadow-sm border border-border/50 text-foreground/50 group-hover:text-primary transition-colors shrink-0">
+                                                            <FileText className="w-5 h-5" />
+                                                        </div>
+                                                        <div>
+                                                            <p className="font-medium text-foreground truncate max-w-[200px] sm:max-w-xs">{doc.titulo}</p>
+                                                            <p className="text-xs text-foreground/60">{doc.descripcion} • {doc.size}</p>
+                                                        </div>
+                                                    </div>
+                                                    <button onClick={() => handleDeleteNormativa(doc.id, doc.url_archivo)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors shrink-0" title="Eliminar normativa">
+                                                        <Trash2 className="w-5 h-5" />
+                                                    </button>
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
+                                </div>
                             </div>
                         )}
 

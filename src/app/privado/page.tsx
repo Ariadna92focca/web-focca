@@ -784,6 +784,16 @@ export default function PrivadoPage() {
         }
     };
 
+    const handleMarkAsRead = async (id: string) => {
+        try {
+            const { error } = await supabase.from('mensajes_contacto').update({ leido: true }).eq('id', id);
+            if (error) throw error;
+            setMensajesContacto(prev => prev.map(m => m.id === id ? { ...m, leido: true } : m));
+        } catch (error) {
+            console.error("Error al marcar como leído:", error);
+        }
+    };
+
     if (loading) {
         return <div className="min-h-[60vh] flex items-center justify-center">Cargando...</div>;
     }
@@ -972,10 +982,16 @@ export default function PrivadoPage() {
                             {isAdmin && (
                                 <button
                                     onClick={() => setActiveTab('mensajes')}
-                                    className={`flex items-center gap-2 pb-3 px-2 whitespace-nowrap transition-colors border-b-2 font-medium ${activeTab === 'mensajes' ? 'border-primary text-primary' : 'border-transparent text-foreground/60 hover:text-foreground'}`}
+                                    className={`flex items-center gap-2 pb-3 px-2 whitespace-nowrap transition-colors border-b-2 font-medium relative ${activeTab === 'mensajes' ? 'border-primary text-primary' : 'border-transparent text-foreground/60 hover:text-foreground'}`}
                                 >
                                     <Mail className="w-4 h-4" />
                                     Mensajes Externos
+                                    {mensajesContacto.filter(m => !m.leido).length > 0 && (
+                                        <span className="absolute -top-1 -right-1 flex h-2 w-2">
+                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                                            <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
+                                        </span>
+                                    )}
                                 </button>
                             )}
                         </div>
@@ -1686,7 +1702,12 @@ export default function PrivadoPage() {
                                                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border/40 pb-3">
                                                         <div className="min-w-0 flex-grow pr-2">
                                                             <div className="flex items-center gap-2 flex-wrap">
-                                                                <span className="font-bold text-foreground text-sm truncate max-w-[200px] sm:max-w-xs">{msg.nombre}</span>
+                                                                <span className="font-bold text-foreground text-sm truncate max-w-[200px] sm:max-w-xs flex items-center gap-1.5">
+                                                                    {!msg.leido && (
+                                                                        <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0 animate-pulse" title="Mensaje Nuevo (Sin leer)"></span>
+                                                                    )}
+                                                                    {msg.nombre}
+                                                                </span>
                                                                 <a 
                                                                     href={`mailto:${msg.email}`} 
                                                                     className="text-xs text-primary hover:underline font-mono truncate max-w-[180px] sm:max-w-[250px]"
@@ -1697,6 +1718,14 @@ export default function PrivadoPage() {
                                                             <h4 className="font-semibold text-foreground text-sm mt-1">{msg.asunto}</h4>
                                                         </div>
                                                         <div className="flex items-center gap-3 shrink-0 self-start sm:self-center">
+                                                            {!msg.leido && (
+                                                                <button 
+                                                                    onClick={() => handleMarkAsRead(msg.id)}
+                                                                    className="text-xs text-primary hover:text-primary-foreground hover:bg-primary/20 dark:hover:bg-primary/30 px-2.5 py-0.5 rounded-lg border border-primary/30 transition-all font-semibold shrink-0"
+                                                                >
+                                                                    Marcar leído
+                                                                </button>
+                                                            )}
                                                             <span className="text-[11px] text-foreground/45 font-semibold">
                                                                 {new Date(msg.fecha_envio).toLocaleDateString('es-ES', { 
                                                                     day: 'numeric', 

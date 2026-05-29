@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
-import { Bird, FileUp, LogOut, CheckCircle2, AlertCircle, FileText, Download, ShieldCheck, Building2, FolderArchive, Users, Plus, Trash2, Filter, Loader2 } from "lucide-react";
+import { Bird, FileUp, LogOut, CheckCircle2, AlertCircle, FileText, Download, ShieldCheck, Building2, FolderArchive, Users, Plus, Trash2, Filter, Loader2, UserCircle, Newspaper } from "lucide-react";
 import { Session } from "@supabase/supabase-js";
 
 interface FocdeUser {
@@ -16,6 +16,8 @@ interface Asociacion {
     id: string;
     nombre: string;
     provincia: string | null;
+    email?: string;
+    url_logo?: string | null;
 }
 
 interface Documento {
@@ -56,6 +58,22 @@ interface NormativaPublica {
     fecha_subida: string;
 }
 
+interface Directivo {
+    id: string;
+    nombre: string;
+    rol: string;
+    url_foto: string | null;
+    orden: number;
+}
+
+interface Noticia {
+    id: string;
+    fecha: string;
+    titulo: string;
+    url_documento: string;
+    created_at: string;
+}
+
 export default function PrivadoPage() {
     const [session, setSession] = useState<Session | null>(null);
     const [userData, setUserData] = useState<FocdeUser | null>(null);
@@ -67,7 +85,7 @@ export default function PrivadoPage() {
     const [authError, setAuthError] = useState("");
 
     // App State
-    const [activeTab, setActiveTab] = useState<'anillas' | 'generales' | 'miembros' | 'normativas'>('anillas');
+    const [activeTab, setActiveTab] = useState<'anillas' | 'generales' | 'miembros' | 'normativas' | 'directiva' | 'asociaciones' | 'noticias'>('anillas');
     const [adminViewMode, setAdminViewMode] = useState<'global' | 'asociacion'>('global');
     const [selectedAsocId, setSelectedAsocId] = useState<string>('');
     const [asociacionesList, setAsociacionesList] = useState<Asociacion[]>([]);
@@ -76,12 +94,33 @@ export default function PrivadoPage() {
     const [uploading, setUploading] = useState(false);
     const [uploadMessage, setUploadMessage] = useState({ type: '', text: '' });
 
-    const [nuevoMiembro, setNuevoMiembro] = useState({ nombre: '', rol: '', correo: '', telefono: '' });
+    const [nuevoMiembro, setNuevoMiembro] = useState({ nombre: '', rol: '', correo: '', telefono: '', asociacion_id: '' });
     const [guardandoMiembro, setGuardandoMiembro] = useState(false);
     const [miembroMessage, setMiembroMessage] = useState({ type: '', text: '' });
 
     const [nuevaNormativa, setNuevaNormativa] = useState({ titulo: '', descripcion: '' });
     const [isDraggingNormativa, setIsDraggingNormativa] = useState(false);
+
+    // Directiva management states
+    const [comiteMembers, setComiteMembers] = useState<Directivo[]>([]);
+    const [juntaMembers, setJuntaMembers] = useState<Directivo[]>([]);
+    const [directivoForm, setDirectivoForm] = useState({ id: '', nombre: '', rol: '', orden: 0, grupo: 'comite' as 'comite' | 'junta' });
+    const [directivoFoto, setDirectivoFoto] = useState<File | null>(null);
+    const [directivoFormMode, setDirectivoFormMode] = useState<'add' | 'edit'>('add');
+    const [directivoMessage, setDirectivoMessage] = useState({ type: '', text: '' });
+    const [guardandoDirectivo, setGuardandoDirectivo] = useState(false);
+
+    // Asociaciones management states
+    const [asocForm, setAsocForm] = useState({ id: '', nombre: '', provincia: '', email: '', password: '' });
+    const [asocLogoFile, setAsocLogoFile] = useState<File | null>(null);
+    const [asocFormMode, setAsocFormMode] = useState<'add' | 'edit'>('add');
+    const [asocMessage, setAsocMessage] = useState({ type: '', text: '' });
+    const [guardandoAsoc, setGuardandoAsoc] = useState(false);
+
+    // Noticias management states
+    const [noticias, setNoticias] = useState<Noticia[]>([]);
+    const [nuevaNoticia, setNuevaNoticia] = useState({ titulo: '', fecha: new Date().toISOString().split('T')[0] });
+    const [noticiaMessage, setNoticiaMessage] = useState({ type: '', text: '' });
 
 
     // Data Collections
@@ -120,6 +159,7 @@ export default function PrivadoPage() {
                 setDocumentosGenerales([]);
                 setMiembros([]);
                 setNormativas([]);
+                setNoticias([]);
                 setLoading(false);
             }
         });
@@ -207,6 +247,19 @@ export default function PrivadoPage() {
         let q4 = supabase.from('normativas_publicas').select('*').order('fecha_subida', { ascending: false });
         const { data: d4 } = await q4;
         setNormativas((d4 || []) as NormativaPublica[]);
+
+        // Cargar listas de la cúpula directiva
+        let q5 = supabase.from('comite_ejecutivo').select('*').order('orden', { ascending: true });
+        const { data: d5 } = await q5;
+        setComiteMembers((d5 || []) as Directivo[]);
+
+        let q6 = supabase.from('junta_directiva').select('*').order('orden', { ascending: true });
+        const { data: d6 } = await q6;
+        setJuntaMembers((d6 || []) as Directivo[]);
+
+        let q7 = supabase.from('noticias').select('*').order('fecha', { ascending: false });
+        const { data: d7 } = await q7;
+        setNoticias((d7 || []) as Noticia[]);
     };
 
     // UseEffect to trigger re-fetch when admin changes association filter
@@ -378,7 +431,11 @@ export default function PrivadoPage() {
         e.preventDefault();
         setMiembroMessage({ type: '', text: '' });
 
-        if (!userData?.asociacion_id) return;
+        const targetAsocId = isAdmin ? nuevoMiembro.asociacion_id : userData?.asociacion_id;
+        if (!targetAsocId) {
+            setMiembroMessage({ type: 'error', text: 'Por favor, selecciona una asociación vinculada.' });
+            return;
+        }
         if (!nuevoMiembro.nombre || !nuevoMiembro.rol || !nuevoMiembro.correo) return;
 
         try {
@@ -386,7 +443,7 @@ export default function PrivadoPage() {
             const { error } = await supabase
                 .from('miembros_asociacion')
                 .insert({
-                    asociacion_id: userData.asociacion_id,
+                    asociacion_id: targetAsocId,
                     nombre: nuevoMiembro.nombre,
                     rol: nuevoMiembro.rol,
                     correo: nuevoMiembro.correo,
@@ -396,11 +453,11 @@ export default function PrivadoPage() {
             if (error) throw error;
 
             setMiembroMessage({ type: 'success', text: 'Miembro añadido con éxito.' });
-            setNuevoMiembro({ nombre: '', rol: '', correo: '', telefono: '' });
+            setNuevoMiembro({ nombre: '', rol: '', correo: '', telefono: '', asociacion_id: '' });
 
             // Refrescar
-            if (userData.rol === 'admin') fetchAllData(adminViewMode === 'asociacion' ? selectedAsocId : undefined);
-            else fetchMyData(userData.asociacion_id);
+            if (userData?.rol === 'admin') fetchAllData(adminViewMode === 'asociacion' ? selectedAsocId : undefined);
+            else if (userData?.asociacion_id) fetchMyData(userData.asociacion_id);
 
             // Timeout clear message
             setTimeout(() => setMiembroMessage({ type: '', text: '' }), 4000);
@@ -440,6 +497,261 @@ export default function PrivadoPage() {
         } catch (error) {
             console.error("Error al descargar:", error);
             alert("No se pudo descargar el documento o no tienes permisos.");
+        }
+    };
+
+    const handleSaveDirectivo = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setDirectivoMessage({ type: '', text: '' });
+
+        if (!directivoForm.nombre || !directivoForm.rol) {
+            setDirectivoMessage({ type: 'error', text: 'Por favor, rellena el nombre y el rol.' });
+            return;
+        }
+
+        try {
+            setGuardandoDirectivo(true);
+            let finalPhotoUrl = null;
+
+            if (directivoFoto) {
+                const fileExt = directivoFoto.name.split('.').pop();
+                const fileName = `directiva/${Date.now()}_${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
+                
+                const { error: uploadError } = await supabase.storage
+                    .from('documentos')
+                    .upload(fileName, directivoFoto);
+
+                if (uploadError) throw uploadError;
+                finalPhotoUrl = fileName;
+            }
+
+            if (directivoFormMode === 'add') {
+                const { error: dbError } = await supabase
+                    .from(directivoForm.grupo === 'comite' ? 'comite_ejecutivo' : 'junta_directiva')
+                    .insert({
+                        nombre: directivoForm.nombre,
+                        rol: directivoForm.rol,
+                        orden: directivoForm.orden || 0,
+                        url_foto: finalPhotoUrl
+                    });
+
+                if (dbError) throw dbError;
+                setDirectivoMessage({ type: 'success', text: 'Miembro directivo añadido con éxito.' });
+            } else {
+                // Edit mode
+                const updateData: any = {
+                    nombre: directivoForm.nombre,
+                    rol: directivoForm.rol,
+                    orden: directivoForm.orden || 0
+                };
+                if (finalPhotoUrl) updateData.url_foto = finalPhotoUrl;
+
+                const { error: dbError } = await supabase
+                    .from(directivoForm.grupo === 'comite' ? 'comite_ejecutivo' : 'junta_directiva')
+                    .update(updateData)
+                    .eq('id', directivoForm.id);
+
+                if (dbError) throw dbError;
+                setDirectivoMessage({ type: 'success', text: 'Miembro directivo actualizado con éxito.' });
+            }
+
+            // Reset
+            setDirectivoForm({ id: '', nombre: '', rol: '', orden: 0, grupo: 'comite' });
+            setDirectivoFoto(null);
+            setDirectivoFormMode('add');
+            
+            // Reload all
+            fetchAllData();
+
+            setTimeout(() => setDirectivoMessage({ type: '', text: '' }), 4000);
+        } catch (error: any) {
+            console.error("Error directivo:", error);
+            setDirectivoMessage({ type: 'error', text: error.message || 'Error al guardar directivo.' });
+        } finally {
+            setGuardandoDirectivo(false);
+        }
+    };
+
+    const handleDeleteDirectivo = async (id: string, group: 'comite' | 'junta', urlFoto: string | null) => {
+        if (!confirm("¿Seguro que deseas eliminar este directivo?")) return;
+        try {
+            if (urlFoto) {
+                const { error: storageError } = await supabase.storage.from('documentos').remove([urlFoto]);
+                if (storageError) console.error("Could not delete directivo photo", storageError);
+            }
+
+            const { error: dbError } = await supabase
+                .from(group === 'comite' ? 'comite_ejecutivo' : 'junta_directiva')
+                .delete()
+                .eq('id', id);
+
+            if (dbError) throw dbError;
+
+            if (group === 'comite') setComiteMembers(prev => prev.filter(m => m.id !== id));
+            else setJuntaMembers(prev => prev.filter(m => m.id !== id));
+        } catch (error) {
+            alert("Error al eliminar directivo.");
+        }
+    };
+
+    const handleSaveAsociacion = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setAsocMessage({ type: '', text: '' });
+
+        if (!asocForm.nombre || !asocForm.provincia || !asocForm.email) {
+            setAsocMessage({ type: 'error', text: 'Por favor, rellena todos los campos obligatorios.' });
+            return;
+        }
+
+        try {
+            setGuardandoAsoc(true);
+            let logoPath = null;
+
+            if (asocLogoFile) {
+                const fileExt = asocLogoFile.name.split('.').pop();
+                logoPath = `logos/${Date.now()}_${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
+
+                const { error: uploadError } = await supabase.storage
+                    .from('documentos')
+                    .upload(logoPath, asocLogoFile);
+
+                if (uploadError) throw uploadError;
+            }
+
+            if (asocFormMode === 'add') {
+                const { data, error } = await supabase.rpc('crear_asociacion_completa', {
+                    p_nombre: asocForm.nombre,
+                    p_provincia: asocForm.provincia,
+                    p_email: asocForm.email,
+                    p_password: asocForm.password || 'password123',
+                    p_url_logo: logoPath
+                });
+
+                if (error) throw error;
+                setAsocMessage({ type: 'success', text: 'Asociación registrada con éxito.' });
+            } else {
+                const { error } = await supabase.rpc('actualizar_asociacion_completa', {
+                    p_id: asocForm.id,
+                    p_nombre: asocForm.nombre,
+                    p_provincia: asocForm.provincia,
+                    p_email: asocForm.email,
+                    p_password: asocForm.password || null,
+                    p_url_logo: logoPath || null
+                });
+
+                if (error) throw error;
+                setAsocMessage({ type: 'success', text: 'Asociación actualizada con éxito.' });
+            }
+
+            setAsocForm({ id: '', nombre: '', provincia: '', email: '', password: '' });
+            setAsocLogoFile(null);
+            setAsocFormMode('add');
+            
+            // Reload all
+            await fetchAsociacionesList();
+            fetchAllData();
+
+            setTimeout(() => setAsocMessage({ type: '', text: '' }), 4000);
+        } catch (error: any) {
+            console.error("Error asociacion:", error);
+            setAsocMessage({ type: 'error', text: error.message || 'Error al procesar asociación.' });
+        } finally {
+            setGuardandoAsoc(false);
+        }
+    };
+
+    const handleDeleteAsociacion = async (id: string, urlLogo: string | null) => {
+        if (!confirm("¿Seguro que deseas eliminar esta asociación? Se purgará en cascada de la base de datos y de la autenticación.")) return;
+        try {
+            if (urlLogo && !urlLogo.startsWith('/assets/')) {
+                const { error: storageError } = await supabase.storage.from('documentos').remove([urlLogo]);
+                if (storageError) console.error("Could not delete logo from storage", storageError);
+            }
+
+            const { error } = await supabase.rpc('eliminar_asociacion_completa', { p_id: id });
+            if (error) throw error;
+
+            await fetchAsociacionesList();
+            fetchAllData();
+        } catch (error: any) {
+            alert("Error al eliminar la asociación: " + error.message);
+        }
+    };
+
+    const handleUploadNoticiaDirect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.files || e.target.files.length === 0) return;
+        
+        if (!nuevaNoticia.titulo || !nuevaNoticia.fecha) {
+            setNoticiaMessage({ type: 'error', text: 'Por favor, rellena el título y la fecha antes de subir el documento.' });
+            e.target.value = '';
+            return;
+        }
+
+        try {
+            setUploading(true);
+            setNoticiaMessage({ type: '', text: '' });
+            
+            const file = e.target.files[0];
+            const fileExt = file.name.split('.').pop();
+            
+            // Sanitizamos el título para crear un nombre de archivo amigable
+            const cleanTitle = nuevaNoticia.titulo
+                .toLowerCase()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "") // eliminar acentos/tildes
+                .replace(/[^a-z0-9]+/g, "_")    // reemplazar espacios y caracteres especiales por guiones bajos
+                .replace(/^_+|_+$/g, "");       // recortar guiones bajos iniciales/finales
+            
+            const randomSuffix = Math.random().toString(36).substring(2, 7);
+            const fileName = `noticias/${cleanTitle}_${randomSuffix}.${fileExt}`;
+
+            // Subida INMEDIATA desde el selector del archivo
+            const { error: uploadError } = await supabase.storage
+                .from('documentos')
+                .upload(fileName, file);
+
+            if (uploadError) throw uploadError;
+
+            const { error: dbError } = await supabase
+                .from('noticias')
+                .insert({
+                    titulo: nuevaNoticia.titulo,
+                    fecha: nuevaNoticia.fecha,
+                    url_documento: fileName
+                });
+
+            if (dbError) throw dbError;
+
+            setNuevaNoticia({ titulo: '', fecha: new Date().toISOString().split('T')[0] });
+            setNoticiaMessage({ type: 'success', text: "Noticia publicada con éxito." });
+            
+            // Recargar datos
+            const { data: d7 } = await supabase.from('noticias').select('*').order('fecha', { ascending: false });
+            setNoticias((d7 || []) as Noticia[]);
+
+            setTimeout(() => setNoticiaMessage({ type: '', text: '' }), 4000);
+            
+        } catch (error: any) {
+            console.error("Upload error caught:", error);
+            setNoticiaMessage({ type: 'error', text: error.message || "Error al subir la noticia" });
+        } finally {
+            setUploading(false);
+            e.target.value = '';
+        }
+    };
+
+    const handleDeleteNoticia = async (id: string, filePath: string) => {
+        if (!confirm("¿Seguro que deseas eliminar esta noticia?")) return;
+        try {
+            const { error: storageError } = await supabase.storage.from('documentos').remove([filePath]);
+            if (storageError) console.error("Could not delete file from storage", storageError);
+
+            const { error: dbError } = await supabase.from('noticias').delete().eq('id', id);
+            if (dbError) throw dbError;
+
+            setNoticias(prev => prev.filter(n => n.id !== id));
+        } catch (error) {
+            alert("Error al eliminar la noticia.");
         }
     };
 
@@ -601,6 +913,33 @@ export default function PrivadoPage() {
                                     Normativas Públicas
                                 </button>
                             )}
+                            {isAdmin && (
+                                <button
+                                    onClick={() => setActiveTab('directiva')}
+                                    className={`flex items-center gap-2 pb-3 px-2 whitespace-nowrap transition-colors border-b-2 font-medium ${activeTab === 'directiva' ? 'border-primary text-primary' : 'border-transparent text-foreground/60 hover:text-foreground'}`}
+                                >
+                                    <ShieldCheck className="w-4 h-4" />
+                                    Cúpula Directiva
+                                </button>
+                            )}
+                            {isAdmin && (
+                                <button
+                                    onClick={() => setActiveTab('asociaciones')}
+                                    className={`flex items-center gap-2 pb-3 px-2 whitespace-nowrap transition-colors border-b-2 font-medium ${activeTab === 'asociaciones' ? 'border-primary text-primary' : 'border-transparent text-foreground/60 hover:text-foreground'}`}
+                                >
+                                    <Building2 className="w-4 h-4" />
+                                    Asociaciones
+                                </button>
+                            )}
+                            {isAdmin && (
+                                <button
+                                    onClick={() => setActiveTab('noticias')}
+                                    className={`flex items-center gap-2 pb-3 px-2 whitespace-nowrap transition-colors border-b-2 font-medium ${activeTab === 'noticias' ? 'border-primary text-primary' : 'border-transparent text-foreground/60 hover:text-foreground'}`}
+                                >
+                                    <Newspaper className="w-4 h-4" />
+                                    Noticias
+                                </button>
+                            )}
                         </div>
 
 
@@ -715,50 +1054,62 @@ export default function PrivadoPage() {
                         {/* TAB 3: Miembros */}
                         {activeTab === 'miembros' && (
                             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
-
-                                {/* Formulario para agregar miembros solo si no es admin general (o si la asociación necesita) */}
-                                {!isAdmin && (
-                                    <div className="bg-white dark:bg-card p-6 sm:p-8 rounded-3xl border border-border shadow-sm">
-                                        <div className="flex items-center gap-4 mb-6">
-                                            <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-xl text-purple-600 dark:text-purple-400">
-                                                <Users className="w-6 h-6" />
-                                            </div>
-                                            <div>
-                                                <h2 className="font-heading text-xl font-bold text-foreground">Registro de Miembros</h2>
-                                                <p className="text-sm text-foreground/60">Da de alta nuevos afiliados en la base de datos oficial.</p>
-                                            </div>
+                                {/* Formulario para agregar miembros */}
+                                <div className="bg-white dark:bg-card p-6 sm:p-8 rounded-3xl border border-border shadow-sm">
+                                    <div className="flex items-center gap-4 mb-6">
+                                        <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-xl text-purple-600 dark:text-purple-400">
+                                            <Users className="w-6 h-6" />
                                         </div>
-
-                                        <form onSubmit={handleAddMiembro} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div className="space-y-1">
-                                                <label className="text-sm font-medium text-foreground">Nombre Completo</label>
-                                                <input required type="text" value={nuevoMiembro.nombre} onChange={e => setNuevoMiembro({ ...nuevoMiembro, nombre: e.target.value })} className="w-full border border-border/60 bg-background rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary/50 outline-none" placeholder="Ej. Juan Pérez" />
-                                            </div>
-                                            <div className="space-y-1">
-                                                <label className="text-sm font-medium text-foreground">Rol / Cargo</label>
-                                                <input required type="text" value={nuevoMiembro.rol} onChange={e => setNuevoMiembro({ ...nuevoMiembro, rol: e.target.value })} className="w-full border border-border/60 bg-background rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary/50 outline-none" placeholder="Ej. Socio, Vocal..." />
-                                            </div>
-                                            <div className="space-y-1">
-                                                <label className="text-sm font-medium text-foreground">Correo Electrónico</label>
-                                                <input required type="email" value={nuevoMiembro.correo} onChange={e => setNuevoMiembro({ ...nuevoMiembro, correo: e.target.value })} className="w-full border border-border/60 bg-background rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary/50 outline-none" placeholder="correo@ejemplo.com" />
-                                            </div>
-                                            <div className="space-y-1">
-                                                <label className="text-sm font-medium text-foreground">Número de Teléfono</label>
-                                                <input type="tel" value={nuevoMiembro.telefono} onChange={e => setNuevoMiembro({ ...nuevoMiembro, telefono: e.target.value })} className="w-full border border-border/60 bg-background rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary/50 outline-none" placeholder="Ej. 600000000" />
-                                            </div>
-
-                                            <div className="md:col-span-2 pt-2">
-                                                <button type="submit" disabled={guardandoMiembro} className="flex items-center justify-center gap-2 w-full sm:w-auto px-6 py-2.5 bg-primary text-primary-foreground font-medium rounded-xl hover:bg-primary/90 transition-colors">
-                                                    {guardandoMiembro ? 'Guardando...' : <><Plus className="w-4 h-4" /> Registrar Miembro</>}
-                                                </button>
-                                                {miembroMessage.text && (
-                                                    <p className={`mt-3 text-sm font-medium ${miembroMessage.type === 'success' ? 'text-green-600' : 'text-red-500'}`}>{miembroMessage.text}</p>
-                                                )}
-                                            </div>
-                                        </form>
+                                        <div>
+                                            <h2 className="font-heading text-xl font-bold text-foreground">Registro de Miembros</h2>
+                                            <p className="text-sm text-foreground/60">Da de alta nuevos afiliados en la base de datos oficial.</p>
+                                        </div>
                                     </div>
-                                )}
 
+                                    <form onSubmit={handleAddMiembro} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="space-y-1">
+                                            <label className="text-sm font-medium text-foreground">Nombre Completo</label>
+                                            <input required type="text" value={nuevoMiembro.nombre} onChange={e => setNuevoMiembro({ ...nuevoMiembro, nombre: e.target.value })} className="w-full border border-border/60 bg-background rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary/50 outline-none" placeholder="Ej. Juan Pérez" />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <label className="text-sm font-medium text-foreground">Rol / Cargo</label>
+                                            <input required type="text" value={nuevoMiembro.rol} onChange={e => setNuevoMiembro({ ...nuevoMiembro, rol: e.target.value })} className="w-full border border-border/60 bg-background rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary/50 outline-none" placeholder="Ej. Socio, Vocal..." />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <label className="text-sm font-medium text-foreground">Correo Electrónico</label>
+                                            <input required type="email" value={nuevoMiembro.correo} onChange={e => setNuevoMiembro({ ...nuevoMiembro, correo: e.target.value })} className="w-full border border-border/60 bg-background rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary/50 outline-none" placeholder="correo@ejemplo.com" />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <label className="text-sm font-medium text-foreground">Número de Teléfono</label>
+                                            <input type="tel" value={nuevoMiembro.telefono} onChange={e => setNuevoMiembro({ ...nuevoMiembro, telefono: e.target.value })} className="w-full border border-border/60 bg-background rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary/50 outline-none" placeholder="Ej. 600000000" />
+                                        </div>
+                                        {isAdmin && (
+                                            <div className="space-y-1">
+                                                <label className="text-sm font-medium text-foreground">Asociación Vinculada</label>
+                                                <select 
+                                                    required 
+                                                    value={nuevoMiembro.asociacion_id} 
+                                                    onChange={e => setNuevoMiembro({ ...nuevoMiembro, asociacion_id: e.target.value })} 
+                                                    className="w-full border border-border/60 bg-background rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary/50 outline-none"
+                                                >
+                                                    <option value="">Selecciona una asociación...</option>
+                                                    {asociacionesList.map(a => (
+                                                        <option key={a.id} value={a.id}>{a.nombre}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        )}
+
+                                        <div className="md:col-span-2 pt-2">
+                                            <button type="submit" disabled={guardandoMiembro} className="flex items-center justify-center gap-2 w-full sm:w-auto px-6 py-2.5 bg-primary text-primary-foreground font-medium rounded-xl hover:bg-primary/90 transition-colors">
+                                                {guardandoMiembro ? 'Guardando...' : <><Plus className="w-4 h-4" /> Registrar Miembro</>}
+                                            </button>
+                                            {miembroMessage.text && (
+                                                <p className={`mt-3 text-sm font-medium ${miembroMessage.type === 'success' ? 'text-green-600' : 'text-red-500'}`}>{miembroMessage.text}</p>
+                                            )}
+                                        </div>
+                                    </form>
+                                </div>
                                 {/* Lista de Miembros */}
                                 <div className="bg-white dark:bg-card p-6 sm:p-8 rounded-3xl border border-border shadow-sm">
                                     <h2 className="font-heading text-xl font-bold text-foreground mb-6">Listado Base de Afiliados</h2>
@@ -884,6 +1235,391 @@ export default function PrivadoPage() {
                             </div>
                         )}
 
+                        {/* TAB 5: Gestión de Cúpula Directiva */}
+                        {activeTab === 'directiva' && isAdmin && (
+                            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                                {/* Formulario para agregar / editar directivo */}
+                                <div className="bg-white dark:bg-card p-6 sm:p-8 rounded-3xl border border-border shadow-sm">
+                                    <div className="flex items-center gap-4 mb-6">
+                                        <div className="p-3 bg-amber-100 dark:bg-amber-900/30 rounded-xl text-amber-600 dark:text-amber-400">
+                                            <ShieldCheck className="w-6 h-6" />
+                                        </div>
+                                        <div>
+                                            <h2 className="font-heading text-xl font-bold text-foreground">
+                                                {directivoFormMode === 'add' ? 'Añadir Integrante a la Cúpula' : 'Editar Integrante de la Cúpula'}
+                                            </h2>
+                                            <p className="text-sm text-foreground/60">Gestiona los integrantes del Comité Ejecutivo o la Junta Directiva.</p>
+                                        </div>
+                                    </div>
+
+                                    <form onSubmit={handleSaveDirectivo} className="space-y-4">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div className="space-y-1">
+                                                <label className="text-sm font-medium text-foreground">Nombre Completo</label>
+                                                <input 
+                                                    required 
+                                                    type="text" 
+                                                    value={directivoForm.nombre} 
+                                                    onChange={e => setDirectivoForm({ ...directivoForm, nombre: e.target.value })} 
+                                                    className="w-full border border-border/60 bg-background rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary/50 outline-none" 
+                                                    placeholder="Ej. D. Antonio Castellano Domínguez" 
+                                                />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-sm font-medium text-foreground">Cargo / Rol</label>
+                                                <input 
+                                                    required 
+                                                    type="text" 
+                                                    value={directivoForm.rol} 
+                                                    onChange={e => setDirectivoForm({ ...directivoForm, rol: e.target.value })} 
+                                                    className="w-full border border-border/60 bg-background rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary/50 outline-none" 
+                                                    placeholder="Ej. Presidente, Vocal..." 
+                                                />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-sm font-medium text-foreground">Orden de Aparición</label>
+                                                <input 
+                                                    type="number" 
+                                                    value={directivoForm.orden} 
+                                                    onChange={e => setDirectivoForm({ ...directivoForm, orden: parseInt(e.target.value, 10) || 0 })} 
+                                                    className="w-full border border-border/60 bg-background rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary/50 outline-none" 
+                                                />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-sm font-medium text-foreground">Grupo</label>
+                                                <select 
+                                                    value={directivoForm.grupo} 
+                                                    onChange={e => setDirectivoForm({ ...directivoForm, grupo: e.target.value as 'comite' | 'junta' })} 
+                                                    className="w-full border border-border/60 bg-background rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary/50 outline-none"
+                                                >
+                                                    <option value="comite">Comité Ejecutivo</option>
+                                                    <option value="junta">Junta Directiva</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-1">
+                                            <label className="text-sm font-medium text-foreground block">Fotografía (Opcional)</label>
+                                            <input 
+                                                type="file" 
+                                                accept="image/*" 
+                                                onChange={e => setDirectivoFoto(e.target.files?.[0] || null)} 
+                                                className="text-sm text-foreground/75"
+                                            />
+                                        </div>
+
+                                        <div className="flex gap-2 justify-end pt-2 border-t border-border/50">
+                                            {directivoFormMode === 'edit' && (
+                                                <button 
+                                                    type="button" 
+                                                    onClick={() => {
+                                                        setDirectivoForm({ id: '', nombre: '', rol: '', orden: 0, grupo: 'comite' });
+                                                        setDirectivoFoto(null);
+                                                        setDirectivoFormMode('add');
+                                                    }}
+                                                    className="px-4 py-2 bg-secondary text-secondary-foreground font-medium rounded-xl hover:bg-secondary/80 transition-colors"
+                                                >
+                                                    Cancelar Edición
+                                                </button>
+                                            )}
+                                            <button 
+                                                type="submit" 
+                                                disabled={guardandoDirectivo}
+                                                className="flex items-center gap-2 px-6 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-medium rounded-xl transition-colors"
+                                            >
+                                                {guardandoDirectivo ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />}
+                                                {guardandoDirectivo ? 'Guardando...' : directivoFormMode === 'add' ? 'Añadir a la Cúpula' : 'Guardar Cambios'}
+                                            </button>
+                                        </div>
+                                        {directivoMessage.text && (
+                                            <p className={`text-sm font-medium ${directivoMessage.type === 'success' ? 'text-green-600' : 'text-red-500'}`}>
+                                                {directivoMessage.text}
+                                            </p>
+                                        )}
+                                    </form>
+                                </div>
+
+                                {/* Listado del Comité Ejecutivo */}
+                                <div className="bg-white dark:bg-card p-6 sm:p-8 rounded-3xl border border-border shadow-sm">
+                                    <h3 className="font-heading font-bold text-lg mb-6 text-foreground">Miembros del Comité Ejecutivo</h3>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        {comiteMembers.length === 0 ? (
+                                            <p className="col-span-2 text-center text-sm text-foreground/50 italic py-4">No hay integrantes en el Comité Ejecutivo.</p>
+                                        ) : (
+                                            comiteMembers.map(m => (
+                                                <DirectivoRow 
+                                                    key={m.id} 
+                                                    member={m} 
+                                                    group="comite" 
+                                                    onEdit={() => {
+                                                        setDirectivoForm({ id: m.id, nombre: m.nombre, rol: m.rol, orden: m.orden, grupo: 'comite' });
+                                                        setDirectivoFormMode('edit');
+                                                    }}
+                                                    onDelete={() => handleDeleteDirectivo(m.id, 'comite', m.url_foto)} 
+                                                />
+                                            ))
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Listado de la Junta Directiva */}
+                                <div className="bg-white dark:bg-card p-6 sm:p-8 rounded-3xl border border-border shadow-sm">
+                                    <h3 className="font-heading font-bold text-lg mb-6 text-foreground">Miembros de la Junta Directiva</h3>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        {juntaMembers.length === 0 ? (
+                                            <p className="col-span-2 text-center text-sm text-foreground/50 italic py-4">No hay integrantes en la Junta Directiva.</p>
+                                        ) : (
+                                            juntaMembers.map(m => (
+                                                <DirectivoRow 
+                                                    key={m.id} 
+                                                    member={m} 
+                                                    group="junta" 
+                                                    onEdit={() => {
+                                                        setDirectivoForm({ id: m.id, nombre: m.nombre, rol: m.rol, orden: m.orden, grupo: 'junta' });
+                                                        setDirectivoFormMode('edit');
+                                                    }}
+                                                    onDelete={() => handleDeleteDirectivo(m.id, 'junta', m.url_foto)} 
+                                                />
+                                            ))
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* TAB 6: Gestión de Asociaciones */}
+                        {activeTab === 'asociaciones' && isAdmin && (
+                            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                                {/* Formulario para agregar / editar asociación */}
+                                <div className="bg-white dark:bg-card p-6 sm:p-8 rounded-3xl border border-border shadow-sm">
+                                    <div className="flex items-center gap-4 mb-6">
+                                        <div className="p-3 bg-indigo-100 dark:bg-indigo-900/30 rounded-xl text-indigo-600 dark:text-indigo-400">
+                                            <Building2 className="w-6 h-6" />
+                                        </div>
+                                        <div>
+                                            <h2 className="font-heading text-xl font-bold text-foreground">
+                                                {asocFormMode === 'add' ? 'Registrar Nueva Asociación' : 'Editar Asociación y Credenciales'}
+                                            </h2>
+                                            <p className="text-sm text-foreground/60">Registra y vincula un usuario de acceso básico.</p>
+                                        </div>
+                                    </div>
+
+                                    <form onSubmit={handleSaveAsociacion} className="space-y-4">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div className="space-y-1">
+                                                <label className="text-sm font-medium text-foreground">Nombre de la Asociación</label>
+                                                <input 
+                                                    required 
+                                                    type="text" 
+                                                    value={asocForm.nombre} 
+                                                    onChange={e => setAsocForm({ ...asocForm, nombre: e.target.value })} 
+                                                    className="w-full border border-border/60 bg-background rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary/50 outline-none" 
+                                                    placeholder="Ej. A.O. AviLancelot" 
+                                                />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-sm font-medium text-foreground">Provincia / Isla / Lugar</label>
+                                                <input 
+                                                    required 
+                                                    type="text" 
+                                                    value={asocForm.provincia} 
+                                                    onChange={e => setAsocForm({ ...asocForm, provincia: e.target.value })} 
+                                                    className="w-full border border-border/60 bg-background rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary/50 outline-none" 
+                                                    placeholder="Ej. Lanzarote" 
+                                                />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-sm font-medium text-foreground">Correo de Inicio de Sesión (Usuario)</label>
+                                                <input 
+                                                    required 
+                                                    type="email" 
+                                                    value={asocForm.email} 
+                                                    onChange={e => setAsocForm({ ...asocForm, email: e.target.value })} 
+                                                    className="w-full border border-border/60 bg-background rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary/50 outline-none" 
+                                                    placeholder="Ej. castellanomendozaantonio@gmail.com" 
+                                                />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-sm font-medium text-foreground">
+                                                    Contraseña {asocFormMode === 'edit' && '(dejar en blanco para no cambiar)'}
+                                                </label>
+                                                <input 
+                                                    required={asocFormMode === 'add'} 
+                                                    type="password" 
+                                                    value={asocForm.password} 
+                                                    onChange={e => setAsocForm({ ...asocForm, password: e.target.value })} 
+                                                    className="w-full border border-border/60 bg-background rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary/50 outline-none" 
+                                                    placeholder="••••••••" 
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-1">
+                                            <label className="text-sm font-medium text-foreground block">Logotipo / Imagen (Opcional)</label>
+                                            <input 
+                                                type="file" 
+                                                accept="image/*"
+                                                onChange={e => setAsocLogoFile(e.target.files?.[0] || null)}
+                                                className="text-sm text-foreground/75"
+                                            />
+                                        </div>
+
+                                        <div className="flex gap-2 justify-end pt-2 border-t border-border/50">
+                                            {asocFormMode === 'edit' && (
+                                                <button 
+                                                    type="button" 
+                                                    onClick={() => {
+                                                        setAsocForm({ id: '', nombre: '', provincia: '', email: '', password: '' });
+                                                        setAsocLogoFile(null);
+                                                        setAsocFormMode('add');
+                                                    }}
+                                                    className="px-4 py-2 bg-secondary text-secondary-foreground font-medium rounded-xl hover:bg-secondary/80 transition-colors"
+                                                >
+                                                    Cancelar Edición
+                                                </button>
+                                            )}
+                                            <button 
+                                                type="submit" 
+                                                disabled={guardandoAsoc}
+                                                className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl transition-colors"
+                                            >
+                                                {guardandoAsoc ? <Loader2 className="w-4 h-4 animate-spin" /> : <Building2 className="w-4 h-4" />}
+                                                {guardandoAsoc ? 'Guardando...' : asocFormMode === 'add' ? 'Registrar Asociación' : 'Guardar Cambios'}
+                                            </button>
+                                        </div>
+                                        {asocMessage.text && (
+                                            <p className={`text-sm font-medium ${asocMessage.type === 'success' ? 'text-green-600' : 'text-red-500'}`}>
+                                                {asocMessage.text}
+                                            </p>
+                                        )}
+                                    </form>
+                                </div>
+
+                                {/* Listado de Asociaciones */}
+                                <div className="bg-white dark:bg-card p-6 sm:p-8 rounded-3xl border border-border shadow-sm">
+                                    <h3 className="font-heading font-bold text-lg mb-6 text-foreground">Asociaciones Federadas Registradas</h3>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        {asociacionesList.map(a => (
+                                            <AsociacionRow 
+                                                key={a.id} 
+                                                asoc={a} 
+                                                onEdit={() => {
+                                                    setAsocForm({ id: a.id, nombre: a.nombre, provincia: a.provincia || '', email: a.email || '', password: '' });
+                                                    setAsocFormMode('edit');
+                                                }}
+                                                onDelete={() => handleDeleteAsociacion(a.id, a.url_logo || null)} 
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* TAB 7: Gestión de Noticias */}
+                        {activeTab === 'noticias' && isAdmin && (
+                            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                                {/* Upload Box */}
+                                <div className="bg-white dark:bg-card p-6 sm:p-8 rounded-3xl border border-border shadow-sm">
+                                    <div className="flex items-center gap-4 mb-6">
+                                        <div className="p-3 bg-rose-100 dark:bg-rose-900/30 rounded-xl text-rose-600 dark:text-rose-400">
+                                            <Newspaper className="w-6 h-6" />
+                                        </div>
+                                        <div>
+                                            <h2 className="font-heading text-xl font-bold text-foreground">Publicar Nueva Noticia</h2>
+                                            <p className="text-sm text-foreground/60">Sube un documento o boletín en formato PDF/Imagen para que los visitantes puedan verlo y descargarlo.</p>
+                                        </div>
+                                    </div>
+
+                                    {noticiaMessage.text && (
+                                        <div className={`p-4 rounded-xl text-sm font-medium flex items-center gap-2 mb-6 ${noticiaMessage.type === 'error' ? 'bg-red-50 text-red-600 border border-red-200' : 'bg-rose-50 text-rose-600 border border-rose-200'}`}>
+                                            {noticiaMessage.type === 'error' ? <AlertCircle className="w-5 h-5 shrink-0" /> : <CheckCircle2 className="w-5 h-5 shrink-0" />}
+                                            {noticiaMessage.text}
+                                        </div>
+                                    )}
+
+                                    <div className="space-y-4">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div className="space-y-1">
+                                                <label className="text-sm font-medium text-foreground">Título de la Noticia</label>
+                                                <input 
+                                                    type="text" 
+                                                    value={nuevaNoticia.titulo} 
+                                                    onChange={e => setNuevaNoticia({ ...nuevaNoticia, titulo: e.target.value })} 
+                                                    className="w-full border border-border/60 bg-background rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary/50 outline-none" 
+                                                    placeholder="Ej. Resultados de la Convocatoria de Anillas 2027" 
+                                                />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-sm font-medium text-foreground">Fecha de Publicación</label>
+                                                <input 
+                                                    type="date" 
+                                                    value={nuevaNoticia.fecha} 
+                                                    onChange={e => setNuevaNoticia({ ...nuevaNoticia, fecha: e.target.value })} 
+                                                    className="w-full border border-border/60 bg-background rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary/50 outline-none" 
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="flex justify-end pt-2 border-t border-border/50">
+                                            <label className={`flex items-center gap-2 px-6 py-2.5 font-medium rounded-xl transition-colors ${(!nuevaNoticia.titulo || !nuevaNoticia.fecha || uploading) ? 'bg-rose-600/50 text-white cursor-not-allowed' : 'bg-rose-600 hover:bg-rose-700 text-white cursor-pointer'}`}>
+                                                {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileUp className="w-4 h-4" />}
+                                                {uploading ? "Subiendo..." : "Seleccionar y Subir Documento"}
+                                                <input 
+                                                    type="file" 
+                                                    className="hidden" 
+                                                    accept=".pdf,.jpg,.jpeg,.png,.webp" 
+                                                    onChange={handleUploadNoticiaDirect} 
+                                                    disabled={!nuevaNoticia.titulo || !nuevaNoticia.fecha || uploading} 
+                                                />
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* List Box */}
+                                <div className="bg-white dark:bg-card p-6 sm:p-8 rounded-3xl border border-border shadow-sm">
+                                    <h2 className="font-heading text-xl font-bold text-foreground mb-6">
+                                        Noticias Publicadas
+                                    </h2>
+                                    <div className="space-y-3">
+                                        {noticias.length === 0 ? (
+                                            <p className="text-center py-8 text-foreground/40 italic text-sm border-2 border-dashed border-border rounded-xl">No hay noticias publicadas.</p>
+                                        ) : (
+                                            noticias.map((item) => (
+                                                <div key={item.id} className="flex gap-4 items-center justify-between p-3 border border-border/60 hover:border-border transition-colors rounded-2xl bg-slate-50/50 dark:bg-background/20 w-full">
+                                                    <div className="flex gap-3 items-center min-w-0">
+                                                        <div className="w-10 h-10 rounded-xl bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center text-rose-600 shrink-0">
+                                                            <Newspaper className="w-5 h-5" />
+                                                        </div>
+                                                        <div className="min-w-0">
+                                                            <p className="font-semibold text-foreground text-sm truncate max-w-[200px] sm:max-w-md">{item.titulo}</p>
+                                                            <p className="text-xs text-foreground/60">{new Date(item.fecha).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex gap-1 shrink-0">
+                                                        <button 
+                                                            onClick={() => handleDownload(item.titulo, item.url_documento)} 
+                                                            className="p-2 text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/20 rounded-lg transition-colors" 
+                                                            title="Descargar"
+                                                        >
+                                                            <Download className="w-4 h-4" />
+                                                        </button>
+                                                        <button 
+                                                            onClick={() => handleDeleteNoticia(item.id, item.url_documento)} 
+                                                            className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-lg transition-colors" 
+                                                            title="Eliminar"
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
                     </div>
 
                     {/* Sidebar Area (1 column length) */}
@@ -959,5 +1695,109 @@ function DocumentItem({ doc, isAdmin, onDownload }: { doc: Documento, isAdmin: b
                 Descargar
             </button>
         </div>
-    )
+    );
+}
+
+function DirectivoRow({ 
+    member, 
+    group, 
+    onEdit, 
+    onDelete 
+}: { 
+    member: Directivo, 
+    group: 'comite' | 'junta', 
+    onEdit: () => void, 
+    onDelete: () => void 
+}) {
+    return (
+        <div className="flex gap-4 items-center justify-between p-4 border border-border/60 hover:border-border transition-all rounded-2xl bg-slate-50/50 dark:bg-background/20 group">
+            <div className="flex gap-3 items-center min-w-0">
+                <div className="w-12 h-12 rounded-full overflow-hidden bg-rose-50 dark:bg-rose-950/20 flex items-center justify-center text-rose-500 shrink-0 border border-border/50 shadow-inner">
+                    {member.url_foto ? (
+                        <img 
+                            src={member.url_foto} 
+                            alt={member.nombre} 
+                            className="w-full h-full object-cover transition-transform group-hover:scale-110 duration-300"
+                        />
+                    ) : (
+                        <UserCircle className="w-8 h-8 opacity-70" />
+                    )}
+                </div>
+                <div className="min-w-0">
+                    <p className="font-semibold text-foreground text-sm truncate max-w-[200px] sm:max-w-xs">{member.nombre}</p>
+                    <p className="text-xs text-foreground/60 font-medium">{member.rol}</p>
+                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono bg-secondary text-secondary-foreground mt-0.5 font-bold">
+                        Orden: {member.orden}
+                    </span>
+                </div>
+            </div>
+            <div className="flex gap-1 shrink-0">
+                <button 
+                    onClick={onEdit} 
+                    className="p-2 text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/20 rounded-lg transition-colors" 
+                    title="Editar"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                </button>
+                <button 
+                    onClick={onDelete} 
+                    className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-lg transition-colors" 
+                    title="Eliminar"
+                >
+                    <Trash2 className="w-4 h-4" />
+                </button>
+            </div>
+        </div>
+    );
+}
+
+function AsociacionRow({ 
+    asoc, 
+    onEdit, 
+    onDelete 
+}: { 
+    asoc: Asociacion, 
+    onEdit: () => void, 
+    onDelete: () => void 
+}) {
+    return (
+        <div className="flex gap-4 items-center justify-between p-4 border border-border/60 hover:border-border transition-all rounded-2xl bg-slate-50/50 dark:bg-background/20 group">
+            <div className="flex gap-3 items-center min-w-0">
+                <div className="w-12 h-12 rounded-xl overflow-hidden bg-rose-50 dark:bg-rose-950/20 flex items-center justify-center text-rose-500 shrink-0 border border-border/50 shadow-inner">
+                    {asoc.url_logo ? (
+                        <img 
+                            src={asoc.url_logo} 
+                            alt={asoc.nombre} 
+                            className="w-full h-full object-cover transition-transform group-hover:scale-110 duration-300"
+                        />
+                    ) : (
+                        <Building2 className="w-7 h-7 opacity-70" />
+                    )}
+                </div>
+                <div className="min-w-0">
+                    <p className="font-semibold text-foreground text-sm truncate max-w-[200px] sm:max-w-xs">{asoc.nombre}</p>
+                    <p className="text-xs text-foreground/60">{asoc.provincia || 'Provincia no asignada'}</p>
+                    {asoc.email && (
+                        <p className="text-[10px] text-foreground/45 font-mono truncate max-w-[150px] sm:max-w-[200px]">{asoc.email}</p>
+                    )}
+                </div>
+            </div>
+            <div className="flex gap-1 shrink-0">
+                <button 
+                    onClick={onEdit} 
+                    className="p-2 text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/20 rounded-lg transition-colors" 
+                    title="Editar"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                </button>
+                <button 
+                    onClick={onDelete} 
+                    className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-lg transition-colors" 
+                    title="Eliminar"
+                >
+                    <Trash2 className="w-4 h-4" />
+                </button>
+            </div>
+        </div>
+    );
 }

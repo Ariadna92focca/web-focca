@@ -31,7 +31,7 @@ export function Navbar() {
                         {/* Izquierda: FOCCA */}
                         <Link href="/" className="flex flex-row items-center justify-center sm:justify-start gap-3 sm:gap-4 group transition-transform hover:scale-[1.02] active:scale-95 text-left md:pr-4">
                             <div className="relative h-14 w-14 sm:h-16 sm:w-16 md:h-20 md:w-20 lg:h-24 lg:w-24 rounded-xl overflow-hidden bg-white flex items-center justify-center border border-primary/20 shadow-sm shrink-0 transition-shadow group-hover:shadow-md">
-                                <Image src="/assets/federacion/focca logo.png" alt="FOCCA Logo" fill className="object-contain p-1 lg:p-1.5" />
+                                <Image src="/assets/federacion/FOCCA SIN FONDO (2).JPG" alt="FOCCA Logo" fill className="object-contain p-1 lg:p-1.5" />
                             </div>
                             <div className="flex flex-col justify-center">
                                 <span className="font-heading font-extrabold text-2xl sm:text-3xl md:text-4xl lg:text-4xl tracking-tight text-foreground leading-none mb-1">FOCCA-FOCDE</span>

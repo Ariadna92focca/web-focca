@@ -2,8 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
-import { Bird, FileUp, LogOut, CheckCircle2, AlertCircle, FileText, Download, ShieldCheck, Building2, FolderArchive, Users, Plus, Trash2, Filter, Loader2, UserCircle, Newspaper, Mail } from "lucide-react";
+import { Bird, FileUp, LogOut, CheckCircle2, AlertCircle, FileText, Download, ShieldCheck, Building2, FolderArchive, Users, Plus, Trash2, Filter, Loader2, UserCircle, Newspaper, Mail, Calendar, Image as ImageIcon } from "lucide-react";
 import { Session } from "@supabase/supabase-js";
+import ConcursosAdmin from "@/components/ConcursosAdmin";
+import ImpresosAdmin from "@/components/ImpresosAdmin";
+import GaleriaAdmin from "@/components/GaleriaAdmin";
 
 interface FocdeUser {
     id: string;
@@ -95,7 +98,7 @@ export default function PrivadoPage() {
     const [authError, setAuthError] = useState("");
 
     // App State
-    const [activeTab, setActiveTab] = useState<'anillas' | 'generales' | 'miembros' | 'normativas' | 'directiva' | 'asociaciones' | 'noticias' | 'mensajes'>('anillas');
+    const [activeTab, setActiveTab] = useState<'anillas' | 'generales' | 'miembros' | 'normativas' | 'directiva' | 'asociaciones' | 'noticias' | 'mensajes' | 'concursos' | 'impresos' | 'galeria'>('anillas');
     const [adminViewMode, setAdminViewMode] = useState<'global' | 'asociacion'>('global');
     const [selectedAsocId, setSelectedAsocId] = useState<string>('');
     const [asociacionesList, setAsociacionesList] = useState<Asociacion[]>([]);
@@ -1001,6 +1004,33 @@ export default function PrivadoPage() {
                                     )}
                                 </button>
                             )}
+                            {isAdmin && (
+                                <button
+                                    onClick={() => setActiveTab('concursos')}
+                                    className={`flex items-center gap-2 pb-3 px-2 whitespace-nowrap transition-colors border-b-2 font-medium ${activeTab === 'concursos' ? 'border-primary text-primary' : 'border-transparent text-foreground/60 hover:text-foreground'}`}
+                                >
+                                    <Calendar className="w-4 h-4" />
+                                    Concursos
+                                </button>
+                            )}
+                            {isAdmin && (
+                                <button
+                                    onClick={() => setActiveTab('impresos')}
+                                    className={`flex items-center gap-2 pb-3 px-2 whitespace-nowrap transition-colors border-b-2 font-medium ${activeTab === 'impresos' ? 'border-primary text-primary' : 'border-transparent text-foreground/60 hover:text-foreground'}`}
+                                >
+                                    <FileText className="w-4 h-4" />
+                                    Impresos
+                                </button>
+                            )}
+                            {isAdmin && (
+                                <button
+                                    onClick={() => setActiveTab('galeria')}
+                                    className={`flex items-center gap-2 pb-3 px-2 whitespace-nowrap transition-colors border-b-2 font-medium ${activeTab === 'galeria' ? 'border-primary text-primary' : 'border-transparent text-foreground/60 hover:text-foreground'}`}
+                                >
+                                    <ImageIcon className="w-4 h-4" />
+                                    Galería
+                                </button>
+                            )}
                         </div>
 
 
@@ -1784,6 +1814,21 @@ export default function PrivadoPage() {
                                     </div>
                                 </div>
                             </div>
+                        )}
+
+                        {/* TAB 9: Gestión de Concursos */}
+                        {activeTab === 'concursos' && isAdmin && (
+                            <ConcursosAdmin />
+                        )}
+
+                        {/* TAB 10: Gestión de Impresos */}
+                        {activeTab === 'impresos' && isAdmin && (
+                            <ImpresosAdmin />
+                        )}
+
+                        {/* TAB 11: Gestión de Galería */}
+                        {activeTab === 'galeria' && isAdmin && (
+                            <GaleriaAdmin />
                         )}
 
                     </div>

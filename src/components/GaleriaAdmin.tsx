@@ -157,8 +157,9 @@ export default function GaleriaAdmin() {
             limpiarFormulario();
             fetchFotos();
         } catch (error: any) {
-            console.error("Error al guardar foto en galeria:", error.message);
-            mostrarMensaje("error", error.message || "Error al procesar la foto.");
+            console.error("Error al guardar foto en galeria:", error);
+            const msgError = error?.message || (typeof error === 'string' ? error : "Error al procesar la foto.");
+            mostrarMensaje("error", msgError);
         } finally {
             setSubiendo(false);
         }

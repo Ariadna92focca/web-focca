@@ -37,10 +37,12 @@ export default function ConcursosAdmin() {
     const [archivoBases, setArchivoBases] = useState<File | null>(null);
     const [urlBasesExistente, setUrlBasesExistente] = useState<string | null>(null);
     const [documentoNombreExistente, setDocumentoNombreExistente] = useState<string | null>(null);
+    const [urlBasesParaEliminar, setUrlBasesParaEliminar] = useState<string | null>(null);
 
     // Archivo de cartel
     const [archivoCartel, setArchivoCartel] = useState<File | null>(null);
     const [urlCartelExistente, setUrlCartelExistente] = useState<string | null>(null);
+    const [urlCartelParaEliminar, setUrlCartelParaEliminar] = useState<string | null>(null);
 
     useEffect(() => {
         fetchConcursos();
@@ -82,8 +84,10 @@ export default function ConcursosAdmin() {
         setArchivoBases(null);
         setUrlBasesExistente(null);
         setDocumentoNombreExistente(null);
+        setUrlBasesParaEliminar(null);
         setArchivoCartel(null);
         setUrlCartelExistente(null);
+        setUrlCartelParaEliminar(null);
         setModoFormulario("crear");
         setIdEditar(null);
     };
@@ -126,6 +130,16 @@ export default function ConcursosAdmin() {
             let tamanoBases = null;
             let urlCartel = urlCartelExistente;
 
+            // Eliminar archivos del storage si el usuario los borró en la edición
+            if (urlBasesParaEliminar) {
+                const { error: removeError } = await supabase.storage.from("documentos").remove([urlBasesParaEliminar]);
+                if (removeError) console.error("Error al borrar bases anteriores:", removeError.message);
+            }
+            if (urlCartelParaEliminar) {
+                const { error: removeError } = await supabase.storage.from("documentos").remove([urlCartelParaEliminar]);
+                if (removeError) console.error("Error al borrar cartel anterior:", removeError.message);
+            }
+
             const tituloLimpio = titulo
                 .toLowerCase()
                 .normalize("NFD")
@@ -157,11 +171,8 @@ export default function ConcursosAdmin() {
                 tamanoBases = archivoBases.size < 1024 * 1024 
                     ? `${Math.round(archivoBases.size / 1024)} KB` 
                     : `${sizeInMB} MB`;
-            } else if (urlBasesExistente === null && documentoNombreExistente !== null) {
+            } else if (urlBasesExistente === null) {
                 // El usuario borró las bases
-                if (documentoNombreExistente) {
-                    await supabase.storage.from("documentos").remove([documentoNombreExistente]);
-                }
                 urlBases = null;
                 documentoNombre = null;
             }
@@ -184,7 +195,7 @@ export default function ConcursosAdmin() {
                 if (uploadError) throw uploadError;
 
                 urlCartel = pathName;
-            } else if (urlCartelExistente === null && urlCartelExistente !== urlCartel) {
+            } else if (urlCartelExistente === null) {
                 // El usuario borró el cartel
                 urlCartel = null;
             }
@@ -219,8 +230,9 @@ export default function ConcursosAdmin() {
             limpiarFormulario();
             fetchConcursos();
         } catch (error: any) {
-            console.error("Error al guardar concurso:", error.message);
-            mostrarMensaje("error", error.message || "Error interno al procesar el concurso.");
+            console.error("Error al guardar concurso:", error);
+            const msgError = error?.message || (typeof error === 'string' ? error : "Error interno al procesar el concurso.");
+            mostrarMensaje("error", msgError);
         } finally {
             setSubiendo(false);
         }
@@ -386,6 +398,9 @@ export default function ConcursosAdmin() {
                                         <button
                                             type="button"
                                             onClick={() => {
+                                                if (urlBasesExistente) {
+                                                    setUrlBasesParaEliminar(urlBasesExistente);
+                                                }
                                                 setArchivoBases(null);
                                                 setUrlBasesExistente(null);
                                                 setDocumentoNombreExistente(null);
@@ -425,6 +440,9 @@ export default function ConcursosAdmin() {
                                         <button
                                             type="button"
                                             onClick={() => {
+                                                if (urlCartelExistente) {
+                                                    setUrlCartelParaEliminar(urlCartelExistente);
+                                                }
                                                 setArchivoCartel(null);
                                                 setUrlCartelExistente(null);
                                             }}

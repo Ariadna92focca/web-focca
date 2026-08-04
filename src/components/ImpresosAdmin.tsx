@@ -169,8 +169,9 @@ export default function ImpresosAdmin() {
             limpiarFormulario();
             fetchImpresos();
         } catch (error: any) {
-            console.error("Error al guardar impreso:", error.message);
-            mostrarMensaje("error", error.message || "Error al procesar el impreso.");
+            console.error("Error al guardar impreso:", error);
+            const msgError = error?.message || (typeof error === 'string' ? error : "Error al procesar el impreso.");
+            mostrarMensaje("error", msgError);
         } finally {
             setSubiendo(false);
         }

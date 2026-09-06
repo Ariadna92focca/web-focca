@@ -2,11 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
-import { Bird, FileUp, LogOut, CheckCircle2, AlertCircle, FileText, Download, ShieldCheck, Building2, FolderArchive, Users, Plus, Trash2, Filter, Loader2, UserCircle, Newspaper, Mail, Calendar, Image as ImageIcon } from "lucide-react";
+import { Bird, FileUp, LogOut, CheckCircle2, AlertCircle, FileText, Download, ShieldCheck, Building2, FolderArchive, Users, Plus, Trash2, Filter, Loader2, UserCircle, Newspaper, Mail, Calendar, Image as ImageIcon, Trophy, ChevronDown } from "lucide-react";
 import { Session } from "@supabase/supabase-js";
 import ConcursosAdmin from "@/components/ConcursosAdmin";
 import ImpresosAdmin from "@/components/ImpresosAdmin";
 import GaleriaAdmin from "@/components/GaleriaAdmin";
+import LigaSansofeAdmin from "@/components/LigaSansofeAdmin";
 
 interface FocdeUser {
     id: string;
@@ -98,7 +99,7 @@ export default function PrivadoPage() {
     const [authError, setAuthError] = useState("");
 
     // App State
-    const [activeTab, setActiveTab] = useState<'anillas' | 'generales' | 'miembros' | 'normativas' | 'directiva' | 'asociaciones' | 'noticias' | 'mensajes' | 'concursos' | 'impresos' | 'galeria'>('anillas');
+    const [activeTab, setActiveTab] = useState<'anillas' | 'generales' | 'miembros' | 'normativas' | 'directiva' | 'asociaciones' | 'noticias' | 'mensajes' | 'concursos' | 'impresos' | 'galeria' | 'liga'>('anillas');
     const [adminViewMode, setAdminViewMode] = useState<'global' | 'asociacion'>('global');
     const [selectedAsocId, setSelectedAsocId] = useState<string>('');
     const [asociacionesList, setAsociacionesList] = useState<Asociacion[]>([]);
@@ -139,6 +140,8 @@ export default function PrivadoPage() {
     const [mensajesContacto, setMensajesContacto] = useState<MensajeContacto[]>([]);
     const [expandedMensajeId, setExpandedMensajeId] = useState<string | null>(null);
 
+    // Liga SANSOFÉ pending count state
+    const [ligaPendientesCount, setLigaPendientesCount] = useState<number>(0);
 
     // Data Collections
     const [documents, setDocuments] = useState<Documento[]>([]);
@@ -281,6 +284,10 @@ export default function PrivadoPage() {
         let q8 = supabase.from('mensajes_contacto').select('*').order('fecha_envio', { ascending: false });
         const { data: d8 } = await q8;
         setMensajesContacto((d8 || []) as MensajeContacto[]);
+
+        let q9 = supabase.from('liga_sansofe_inscripciones').select('id', { count: 'exact' }).eq('estado', 'pendiente');
+        const { count: count9 } = await q9;
+        setLigaPendientesCount(count9 || 0);
     };
 
     // UseEffect to trigger re-fetch when admin changes association filter
@@ -931,106 +938,178 @@ export default function PrivadoPage() {
                             </div>
                         )}
 
-                        {/* TABS NAVIGATION */}
-                        <div className="flex border-b border-border/80 gap-2 sm:gap-6 overflow-x-auto pb-1 no-scrollbar">
-                            <button
-                                onClick={() => setActiveTab('anillas')}
-                                className={`flex items-center gap-2 pb-3 px-2 whitespace-nowrap transition-colors border-b-2 font-medium ${activeTab === 'anillas' ? 'border-primary text-primary' : 'border-transparent text-foreground/60 hover:text-foreground'}`}
-                            >
-                                <FileUp className="w-4 h-4" />
-                                Petición Anillas
-                            </button>
-                            <button
-                                onClick={() => setActiveTab('generales')}
-                                className={`flex items-center gap-2 pb-3 px-2 whitespace-nowrap transition-colors border-b-2 font-medium ${activeTab === 'generales' ? 'border-primary text-primary' : 'border-transparent text-foreground/60 hover:text-foreground'}`}
-                            >
-                                <FolderArchive className="w-4 h-4" />
-                                Documentos Generales
-                            </button>
-                            <button
-                                onClick={() => setActiveTab('miembros')}
-                                className={`flex items-center gap-2 pb-3 px-2 whitespace-nowrap transition-colors border-b-2 font-medium ${activeTab === 'miembros' ? 'border-primary text-primary' : 'border-transparent text-foreground/60 hover:text-foreground'}`}
-                            >
-                                <Users className="w-4 h-4" />
-                                Miembros
-                            </button>
-                            {isAdmin && (
-                                <button
-                                    onClick={() => setActiveTab('normativas')}
-                                    className={`flex items-center gap-2 pb-3 px-2 whitespace-nowrap transition-colors border-b-2 font-medium ${activeTab === 'normativas' ? 'border-primary text-primary' : 'border-transparent text-foreground/60 hover:text-foreground'}`}
-                                >
-                                    <FileText className="w-4 h-4" />
-                                    Normativas Públicas
-                                </button>
-                            )}
-                            {isAdmin && (
-                                <button
-                                    onClick={() => setActiveTab('directiva')}
-                                    className={`flex items-center gap-2 pb-3 px-2 whitespace-nowrap transition-colors border-b-2 font-medium ${activeTab === 'directiva' ? 'border-primary text-primary' : 'border-transparent text-foreground/60 hover:text-foreground'}`}
-                                >
-                                    <ShieldCheck className="w-4 h-4" />
-                                    Cúpula Directiva
-                                </button>
-                            )}
-                            {isAdmin && (
-                                <button
-                                    onClick={() => setActiveTab('asociaciones')}
-                                    className={`flex items-center gap-2 pb-3 px-2 whitespace-nowrap transition-colors border-b-2 font-medium ${activeTab === 'asociaciones' ? 'border-primary text-primary' : 'border-transparent text-foreground/60 hover:text-foreground'}`}
-                                >
-                                    <Building2 className="w-4 h-4" />
-                                    Asociaciones
-                                </button>
-                            )}
-                            {isAdmin && (
-                                <button
-                                    onClick={() => setActiveTab('noticias')}
-                                    className={`flex items-center gap-2 pb-3 px-2 whitespace-nowrap transition-colors border-b-2 font-medium ${activeTab === 'noticias' ? 'border-primary text-primary' : 'border-transparent text-foreground/60 hover:text-foreground'}`}
-                                >
-                                    <Newspaper className="w-4 h-4" />
-                                    Noticias
-                                </button>
-                            )}
-                            {isAdmin && (
-                                <button
-                                    onClick={() => setActiveTab('mensajes')}
-                                    className={`flex items-center gap-2 pb-3 px-2 whitespace-nowrap transition-colors border-b-2 font-medium ${activeTab === 'mensajes' ? 'border-primary text-primary' : 'border-transparent text-foreground/60 hover:text-foreground'}`}
-                                >
-                                    <Mail className="w-4 h-4" />
-                                    Mensajes Externos
-                                    {mensajesContacto.filter(m => !m.leido).length > 0 && (
-                                        <span className="inline-flex items-center justify-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-500 text-white animate-pulse ml-1.5 shadow-sm shrink-0">
-                                            {mensajesContacto.filter(m => !m.leido).length}
-                                        </span>
+                        {/* TABS NAVIGATION: DESPLEGABLE Y PILLS MODERNAS */}
+                        <div className="bg-card p-2.5 rounded-2xl border border-border shadow-sm mb-6 space-y-3 sm:space-y-0">
+                            {/* Selector móvil (Drop-down estilizado profesional con Lucide Icons) */}
+                            <div className="block lg:hidden">
+                                <label className="block text-[11px] font-bold text-foreground/50 uppercase tracking-wider mb-1.5 px-1">
+                                    Sección activa
+                                </label>
+
+                                <div className="relative">
+                                    {/* Icono vectorial de la pestaña actualmente seleccionada */}
+                                    <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-primary pointer-events-none flex items-center gap-2">
+                                        {activeTab === 'anillas' && <FileUp className="w-4 h-4" />}
+                                        {activeTab === 'generales' && <FolderArchive className="w-4 h-4" />}
+                                        {activeTab === 'miembros' && <Users className="w-4 h-4" />}
+                                        {activeTab === 'liga' && <Trophy className="w-4 h-4" />}
+                                        {activeTab === 'concursos' && <Calendar className="w-4 h-4" />}
+                                        {activeTab === 'asociaciones' && <Building2 className="w-4 h-4" />}
+                                        {activeTab === 'noticias' && <Newspaper className="w-4 h-4" />}
+                                        {activeTab === 'galeria' && <ImageIcon className="w-4 h-4" />}
+                                        {activeTab === 'impresos' && <FileText className="w-4 h-4" />}
+                                        {activeTab === 'normativas' && <ShieldCheck className="w-4 h-4" />}
+                                        {activeTab === 'directiva' && <UserCircle className="w-4 h-4" />}
+                                        {activeTab === 'mensajes' && <Mail className="w-4 h-4" />}
+                                    </div>
+
+                                    <select
+                                        value={activeTab}
+                                        onChange={(e) => setActiveTab(e.target.value as any)}
+                                        className="w-full bg-background border border-border rounded-xl pl-10 pr-10 py-3 text-sm font-semibold text-foreground appearance-none focus:outline-none focus:ring-2 focus:ring-primary/20 shadow-sm"
+                                    >
+                                        <optgroup label="Gestión de Asociación">
+                                            <option value="anillas">Petición de Anillas</option>
+                                            <option value="generales">Documentos Generales</option>
+                                            <option value="miembros">Miembros de la Asociación</option>
+                                        </optgroup>
+                                        {isAdmin && (
+                                            <optgroup label="Administración Global">
+                                                <option value="liga">
+                                                    Liga Canaria SANSOFÉ {ligaPendientesCount > 0 ? `(${ligaPendientesCount} pendientes)` : ''}
+                                                </option>
+                                                <option value="concursos">Concursos</option>
+                                                <option value="asociaciones">Asociaciones Afiliadas</option>
+                                                <option value="noticias">Noticias</option>
+                                                <option value="galeria">Galería de Fotos</option>
+                                                <option value="impresos">Impresos Oficiales</option>
+                                                <option value="normativas">Normativas Públicas</option>
+                                                <option value="directiva">Cúpula Directiva</option>
+                                                <option value="mensajes">
+                                                    Mensajes de Contacto {mensajesContacto.filter(m => !m.leido).length > 0 ? `(${mensajesContacto.filter(m => !m.leido).length} sin leer)` : ''}
+                                                </option>
+                                            </optgroup>
+                                        )}
+                                    </select>
+
+                                    <div className="absolute right-3.5 top-1/2 -translate-y-1/2 text-foreground/40 pointer-events-none">
+                                        <ChevronDown className="w-4 h-4" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Selector Desktop / Tablet (Pills Categorizadas y Elegantes) */}
+                            <div className="hidden lg:flex flex-wrap items-center justify-between gap-2 p-1">
+                                {/* Bloque 1: Gestión de Asociación y Estructura */}
+                                <div className="flex items-center gap-1 bg-secondary/50 p-1 rounded-xl border border-border/60">
+                                    <button
+                                        onClick={() => setActiveTab('anillas')}
+                                        className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all ${activeTab === 'anillas' ? 'bg-card text-primary shadow-sm' : 'text-foreground/70 hover:text-foreground'}`}
+                                    >
+                                        <FileUp className="w-3.5 h-3.5" />
+                                        Anillas
+                                    </button>
+                                    <button
+                                        onClick={() => setActiveTab('generales')}
+                                        className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all ${activeTab === 'generales' ? 'bg-card text-primary shadow-sm' : 'text-foreground/70 hover:text-foreground'}`}
+                                    >
+                                        <FolderArchive className="w-3.5 h-3.5" />
+                                        Documentos
+                                    </button>
+                                    <button
+                                        onClick={() => setActiveTab('miembros')}
+                                        className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all ${activeTab === 'miembros' ? 'bg-card text-primary shadow-sm' : 'text-foreground/70 hover:text-foreground'}`}
+                                    >
+                                        <Users className="w-3.5 h-3.5" />
+                                        Miembros
+                                    </button>
+
+                                    {isAdmin && (
+                                        <>
+                                            <div className="w-px h-4 bg-border/80 mx-0.5" />
+                                            <button
+                                                onClick={() => setActiveTab('asociaciones')}
+                                                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all ${activeTab === 'asociaciones' ? 'bg-card text-primary shadow-sm' : 'text-foreground/70 hover:text-foreground'}`}
+                                            >
+                                                <Building2 className="w-3.5 h-3.5" />
+                                                Asociaciones
+                                            </button>
+                                            <button
+                                                onClick={() => setActiveTab('directiva')}
+                                                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all ${activeTab === 'directiva' ? 'bg-card text-primary shadow-sm' : 'text-foreground/70 hover:text-foreground'}`}
+                                            >
+                                                <UserCircle className="w-3.5 h-3.5" />
+                                                Directiva
+                                            </button>
+                                        </>
                                     )}
-                                </button>
-                            )}
-                            {isAdmin && (
-                                <button
-                                    onClick={() => setActiveTab('concursos')}
-                                    className={`flex items-center gap-2 pb-3 px-2 whitespace-nowrap transition-colors border-b-2 font-medium ${activeTab === 'concursos' ? 'border-primary text-primary' : 'border-transparent text-foreground/60 hover:text-foreground'}`}
-                                >
-                                    <Calendar className="w-4 h-4" />
-                                    Concursos
-                                </button>
-                            )}
-                            {isAdmin && (
-                                <button
-                                    onClick={() => setActiveTab('impresos')}
-                                    className={`flex items-center gap-2 pb-3 px-2 whitespace-nowrap transition-colors border-b-2 font-medium ${activeTab === 'impresos' ? 'border-primary text-primary' : 'border-transparent text-foreground/60 hover:text-foreground'}`}
-                                >
-                                    <FileText className="w-4 h-4" />
-                                    Impresos
-                                </button>
-                            )}
-                            {isAdmin && (
-                                <button
-                                    onClick={() => setActiveTab('galeria')}
-                                    className={`flex items-center gap-2 pb-3 px-2 whitespace-nowrap transition-colors border-b-2 font-medium ${activeTab === 'galeria' ? 'border-primary text-primary' : 'border-transparent text-foreground/60 hover:text-foreground'}`}
-                                >
-                                    <ImageIcon className="w-4 h-4" />
-                                    Galería
-                                </button>
-                            )}
+                                </div>
+
+                                {/* Bloque 2: Herramientas Globales y Federación */}
+                                {isAdmin && (
+                                    <div className="flex items-center gap-1 bg-secondary/50 p-1 rounded-xl border border-border/60 overflow-x-auto">
+                                        <button
+                                            onClick={() => setActiveTab('liga')}
+                                            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all ${activeTab === 'liga' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-foreground/70 hover:text-foreground'}`}
+                                        >
+                                            <Trophy className="w-3.5 h-3.5" />
+                                            Liga SANSOFÉ
+                                            {ligaPendientesCount > 0 && (
+                                                <span className="inline-flex items-center justify-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-500 text-white animate-pulse shrink-0">
+                                                    {ligaPendientesCount}
+                                                </span>
+                                            )}
+                                        </button>
+                                        <button
+                                            onClick={() => setActiveTab('concursos')}
+                                            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all ${activeTab === 'concursos' ? 'bg-card text-primary shadow-sm' : 'text-foreground/70 hover:text-foreground'}`}
+                                        >
+                                            <Calendar className="w-3.5 h-3.5" />
+                                            Concursos
+                                        </button>
+                                        <button
+                                            onClick={() => setActiveTab('noticias')}
+                                            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all ${activeTab === 'noticias' ? 'bg-card text-primary shadow-sm' : 'text-foreground/70 hover:text-foreground'}`}
+                                        >
+                                            <Newspaper className="w-3.5 h-3.5" />
+                                            Noticias
+                                        </button>
+                                        <button
+                                            onClick={() => setActiveTab('galeria')}
+                                            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all ${activeTab === 'galeria' ? 'bg-card text-primary shadow-sm' : 'text-foreground/70 hover:text-foreground'}`}
+                                        >
+                                            <ImageIcon className="w-3.5 h-3.5" />
+                                            Galería
+                                        </button>
+                                        <button
+                                            onClick={() => setActiveTab('impresos')}
+                                            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all ${activeTab === 'impresos' ? 'bg-card text-primary shadow-sm' : 'text-foreground/70 hover:text-foreground'}`}
+                                        >
+                                            <FileText className="w-3.5 h-3.5" />
+                                            Impresos
+                                        </button>
+                                        <button
+                                            onClick={() => setActiveTab('normativas')}
+                                            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all ${activeTab === 'normativas' ? 'bg-card text-primary shadow-sm' : 'text-foreground/70 hover:text-foreground'}`}
+                                        >
+                                            <ShieldCheck className="w-3.5 h-3.5" />
+                                            Normativas
+                                        </button>
+                                        <button
+                                            onClick={() => setActiveTab('mensajes')}
+                                            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all ${activeTab === 'mensajes' ? 'bg-card text-primary shadow-sm' : 'text-foreground/70 hover:text-foreground'}`}
+                                        >
+                                            <Mail className="w-3.5 h-3.5" />
+                                            Contacto
+                                            {mensajesContacto.filter(m => !m.leido).length > 0 && (
+                                                <span className="inline-flex items-center justify-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-500 text-white animate-pulse shrink-0">
+                                                    {mensajesContacto.filter(m => !m.leido).length}
+                                                </span>
+                                            )}
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
                         </div>
 
 
@@ -1829,6 +1908,10 @@ export default function PrivadoPage() {
                         {/* TAB 11: Gestión de Galería */}
                         {activeTab === 'galeria' && isAdmin && (
                             <GaleriaAdmin />
+                        )}
+
+                        {activeTab === 'liga' && isAdmin && (
+                            <LigaSansofeAdmin />
                         )}
 
                     </div>
